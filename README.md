@@ -58,6 +58,21 @@ DawnAssetHelper 是一個用於協助解包 Unity AssetBundle 遊戲資源的 Wi
 ### 2. 如何設定遊戲資源目錄
 - 在「遊戲資源目錄」欄位點選「瀏覽」，選擇包含 Hero `.ab` 檔案的目錄。
 
+#### 如何找到遊戲資料夾
+
+請注意，若遊戲未更新，將無法存取新資料。資料來源為本機已安裝的遊戲檔案。
+
+**Steam：**
+1. 打開 Steam
+2. 打開收藏庫
+3. 尋找遊戲（Doomsday Last Survivors）
+4. 點擊該遊戲（不是進入遊玩）
+5. 右邊齒輪設定 → 管理 → 瀏覽本機檔案
+6. 依序點擊 `Doomsday_Data\StreamingAssets\ab`
+
+**官網安裝版：**
+- 去 `C:\Program Files` 或 `C:\Program Files (x86)` 找到 Doomsday 資料夾，一樣找到 `Doomsday_Data\StreamingAssets\ab` 即可。
+
 ### 3. 如何掃描 Hero
 - 設定好遊戲資源目錄後，點擊「掃描 Hero」。系統會自動過濾並分類所有的 Hero AB 檔案。
 
