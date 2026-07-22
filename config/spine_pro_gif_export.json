@@ -1,0 +1,29 @@
+{
+    "_comment": "Spine Pro GIF export preset — maps to ffmpeg palettegen/paletteuse parameters",
+    "name": "Spine Pro GIF 匯出設定",
+    "version": 1,
+
+    "enabled": true,
+
+    "fps": 20,
+    "scale_percent": 50,
+
+    "palettegen": {
+        "max_colors": 238,
+        "reserve_transparent": true,
+        "transparency_color": "0xFFFFFF",
+        "stats_mode": "diff"
+    },
+
+    "paletteuse": {
+        "dither": "bayer",
+        "bayer_scale": 3,
+        "diff_mode": "rectangle",
+        "alpha_threshold": 8
+    },
+
+    "gif_output": {
+        "loop": 0,
+        "include_last_frame": false
+    }
+}

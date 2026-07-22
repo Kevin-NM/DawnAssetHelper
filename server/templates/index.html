@@ -1,0 +1,1898 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DawnAssetHelper</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            surface: { DEFAULT: 'var(--bg-surface)', raised: 'var(--bg-raised)', overlay: 'var(--bg-overlay)' },
+            border: { DEFAULT: 'var(--border)', light: 'var(--border-light)' },
+            accent: { DEFAULT: 'var(--accent)', hover: 'var(--accent-hover)', muted: 'color-mix(in srgb, var(--accent) 20%, transparent)' },
+            success: { DEFAULT: '#30a46c', muted: '#30a46c20' },
+            danger: { DEFAULT: '#e5484d', muted: '#e5484d20' },
+            warn: { DEFAULT: '#f5a623', muted: '#f5a62320' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg-body: #0c0c0e;
+      --bg-surface: #19191b;
+      --bg-raised: #1f1f22;
+      --bg-overlay: #111113;
+      --border: #2a2a2e;
+      --border-light: #36363b;
+      --text: #ededef;
+      --text-dim: #8e8e93;
+      --text-muted: #636366;
+      --text-faint: #4a4a50;
+      --accent: #6e56cf;
+      --accent-hover: #7c66dc;
+    }
+    :root.theme-night {
+      --bg-body: #0a0e1a;
+      --bg-surface: #131825;
+      --bg-raised: #1a2030;
+      --bg-overlay: #0e1220;
+      --border: #252d40;
+      --border-light: #2e3a52;
+    }
+    :root.theme-charcoal {
+      --bg-body: #161618;
+      --bg-surface: #222224;
+      --bg-raised: #2a2a2e;
+      --bg-overlay: #1a1a1c;
+      --border: #333336;
+      --border-light: #404044;
+    }
+    :root.theme-ember {
+      --bg-body: #120e0c;
+      --bg-surface: #1c1614;
+      --bg-raised: #241c19;
+      --bg-overlay: #151010;
+      --border: #2e2420;
+      --border-light: #3a302c;
+    }
+    :root.theme-sage {
+      --bg-body: #0c110e;
+      --bg-surface: #141c17;
+      --bg-raised: #1a241e;
+      --bg-overlay: #0f1511;
+      --border: #223028;
+      --border-light: #2e3e34;
+      --accent: #56cf8e;
+      --accent-hover: #66dc9b;
+    }
+    :root.theme-ocean {
+      --bg-body: #0c0e14;
+      --bg-surface: #141822;
+      --bg-raised: #1a2030;
+      --bg-overlay: #0e1118;
+      --border: #252d40;
+      --border-light: #2e3a52;
+      --accent: #568ecf;
+      --accent-hover: #669edc;
+    }
+    :root.theme-lavender {
+      --bg-body: #100e16;
+      --bg-surface: #1a1722;
+      --bg-raised: #221e2e;
+      --bg-overlay: #131018;
+      --border: #2e2838;
+      --border-light: #3c3448;
+      --accent: #9b6eff;
+      --accent-hover: #ab80ff;
+    }
+    :root.theme-rose {
+      --bg-body: #140e10;
+      --bg-surface: #1e1618;
+      --bg-raised: #281e22;
+      --bg-overlay: #171012;
+      --border: #302428;
+      --border-light: #403036;
+      --accent: #cf5680;
+      --accent-hover: #dc6690;
+    }
+    :root.theme-sand {
+      --bg-body: #141210;
+      --bg-surface: #1e1c18;
+      --bg-raised: #282420;
+      --bg-overlay: #181614;
+      --border: #302c26;
+      --border-light: #403a32;
+      --accent: #cfa056;
+      --accent-hover: #dcb066;
+    }
+    :root.theme-frost {
+      --bg-body: #f0f2f5;
+      --bg-surface: #ffffff;
+      --bg-raised: #f5f7fa;
+      --bg-overlay: #e8ecf0;
+      --border: #d8dce2;
+      --border-light: #c8cdd4;
+      --text: #1a1d22;
+      --text-dim: #5a6070;
+      --text-muted: #808898;
+      --text-faint: #a0a8b8;
+      --accent: #6e56cf;
+      --accent-hover: #7c66dc;
+    }
+    :root.theme-blossom {
+      --bg-body: #f5f0f4;
+      --bg-surface: #ffffff;
+      --bg-raised: #faf5f8;
+      --bg-overlay: #f0e8ee;
+      --border: #e2d4de;
+      --border-light: #d0c0cc;
+      --text: #2a1a24;
+      --text-dim: #6a5060;
+      --text-muted: #907888;
+      --text-faint: #b098a8;
+      --accent: #c05090;
+      --accent-hover: #d060a0;
+    }
+    :root.theme-mint {
+      --bg-body: #f0f5f2;
+      --bg-surface: #ffffff;
+      --bg-raised: #f5faf7;
+      --bg-overlay: #e8f0ec;
+      --border: #d4e2d8;
+      --border-light: #c0d0c6;
+      --text: #1a221e;
+      --text-dim: #506a58;
+      --text-muted: #789080;
+      --text-faint: #98b0a0;
+      --accent: #2e8060;
+      --accent-hover: #3e9070;
+    }
+    :root.theme-midnight {
+      --bg-body: #06080e;
+      --bg-surface: #0e1118;
+      --bg-raised: #141822;
+      --bg-overlay: #0a0c12;
+      --border: #1c2230;
+      --border-light: #262e40;
+      --accent: #4080e0;
+      --accent-hover: #5090f0;
+    }
+    :root.theme-forest {
+      --bg-body: #0a0e0a;
+      --bg-surface: #141a14;
+      --bg-raised: #1a221a;
+      --bg-overlay: #0e120e;
+      --border: #223022;
+      --border-light: #2e3e2e;
+      --accent: #40a060;
+      --accent-hover: #50b070;
+    }
+    :root.theme-wine {
+      --bg-body: #100a0c;
+      --bg-surface: #1a1214;
+      --bg-raised: #22181c;
+      --bg-overlay: #140e10;
+      --border: #2e2024;
+      --border-light: #3c2c32;
+      --accent: #d04060;
+      --accent-hover: #e05070;
+    }
+    :root.theme-slate {
+      --bg-body: #101216;
+      --bg-surface: #181c22;
+      --bg-raised: #1e242c;
+      --bg-overlay: #14181c;
+      --border: #283038;
+      --border-light: #343e48;
+      --accent: #6080b0;
+      --accent-hover: #7090c0;
+    }
+    :root.theme-abyss {
+      --bg-body: #040406;
+      --bg-surface: #0c0c10;
+      --bg-raised: #121218;
+      --bg-overlay: #080810;
+      --border: #1a1a24;
+      --border-light: #242430;
+      --accent: #8060e0;
+      --accent-hover: #9070f0;
+    }
+    :root.theme-dusk {
+      --bg-body: #0e0c12;
+      --bg-surface: #18161e;
+      --bg-raised: #201e28;
+      --bg-overlay: #121016;
+      --border: #2a2634;
+      --border-light: #383244;
+      --accent: #a070d0;
+      --accent-hover: #b080e0;
+    }
+    :root.theme-storm {
+      --bg-body: #0a0c12;
+      --bg-surface: #121620;
+      --bg-raised: #181e2a;
+      --bg-overlay: #0e1018;
+      --border: #222a38;
+      --border-light: #2e3848;
+      --accent: #5080c0;
+      --accent-hover: #6090d0;
+    }
+    :root.theme-twilight {
+      --bg-body: #2a2430;
+      --bg-surface: #342e3c;
+      --bg-raised: #3e3848;
+      --bg-overlay: #2e2834;
+      --border: #4a4258;
+      --border-light: #5a5068;
+      --text: #e8e0f0;
+      --text-dim: #a898b8;
+      --text-muted: #887898;
+      --text-faint: #685878;
+      --accent: #b070e0;
+      --accent-hover: #c080f0;
+    }
+    :root.theme-driftwood {
+      --bg-body: #2a2620;
+      --bg-surface: #34302a;
+      --bg-raised: #3e3a32;
+      --bg-overlay: #2e2a24;
+      --border: #4a443a;
+      --border-light: #5a5448;
+      --text: #f0ece4;
+      --text-dim: #b8b0a0;
+      --text-muted: #989080;
+      --text-faint: #787060;
+      --accent: #c0a060;
+      --accent-hover: #d0b070;
+    }
+    :root.theme-copper {
+      --bg-body: #2a201a;
+      --bg-surface: #342a22;
+      --bg-raised: #3e322a;
+      --bg-overlay: #2e241e;
+      --border: #4a3a30;
+      --border-light: #5a4a3e;
+      --text: #f0e8e0;
+      --text-dim: #b8a090;
+      --text-muted: #988070;
+      --text-faint: #786050;
+      --accent: #d08040;
+      --accent-hover: #e09050;
+    }
+    :root.theme-moss {
+      --bg-body: #1e261e;
+      --bg-surface: #283028;
+      --bg-raised: #303a30;
+      --bg-overlay: #222a22;
+      --border: #3a483a;
+      --border-light: #4a5a4a;
+      --text: #e4f0e4;
+      --text-dim: #98b098;
+      --text-muted: #789078;
+      --text-faint: #587058;
+      --accent: #60b060;
+      --accent-hover: #70c070;
+    }
+    :root.theme-plum {
+      --bg-body: #241e28;
+      --bg-surface: #2e2834;
+      --bg-raised: #383240;
+      --bg-overlay: #28222e;
+      --border: #40384c;
+      --border-light: #504860;
+      --text: #ece4f4;
+      --text-dim: #a898b8;
+      --text-muted: #8878a0;
+      --text-faint: #685880;
+      --accent: #a060d0;
+      --accent-hover: #b070e0;
+    }
+    :root.theme-steel {
+      --bg-body: #22262a;
+      --bg-surface: #2c3036;
+      --bg-raised: #343a40;
+      --bg-overlay: #262a2e;
+      --border: #3e444c;
+      --border-light: #4e5660;
+      --text: #e4e8ec;
+      --text-dim: #98a0a8;
+      --text-muted: #788088;
+      --text-faint: #586068;
+      --accent: #6090b0;
+      --accent-hover: #70a0c0;
+    }
+    :root.theme-canyon {
+      --bg-body: #2a1e18;
+      --bg-surface: #342820;
+      --bg-raised: #3e3028;
+      --bg-overlay: #2e221c;
+      --border: #4a3830;
+      --border-light: #5a483e;
+      --text: #f0e4d8;
+      --text-dim: #b8a088;
+      --text-muted: #988068;
+      --text-faint: #786048;
+      --accent: #d07030;
+      --accent-hover: #e08040;
+    }
+    :root.theme-cloud {
+      --bg-body: #e8eaee;
+      --bg-surface: #f5f7fa;
+      --bg-raised: #edf0f4;
+      --bg-overlay: #e0e4ea;
+      --border: #d0d4dc;
+      --border-light: #b8bcc6;
+      --text: #1a1e24;
+      --text-dim: #5a6070;
+      --text-muted: #808898;
+      --text-faint: #a0a8b8;
+      --accent: #5070b0;
+      --accent-hover: #6080c0;
+    }
+    :root.theme-peach {
+      --bg-body: #f5f0ec;
+      --bg-surface: #ffffff;
+      --bg-raised: #faf6f2;
+      --bg-overlay: #f0e8e2;
+      --border: #e2d4ca;
+      --border-light: #d0c0b4;
+      --text: #2a1e18;
+      --text-dim: #6a5848;
+      --text-muted: #907868;
+      --text-faint: #b09888;
+      --accent: #c07040;
+      --accent-hover: #d08050;
+    }
+    :root.theme-sky {
+      --bg-body: #eef2f8;
+      --bg-surface: #ffffff;
+      --bg-raised: #f4f7fc;
+      --bg-overlay: #e4eaf2;
+      --border: #d0d8e4;
+      --border-light: #b8c4d4;
+      --text: #18202a;
+      --text-dim: #506078;
+      --text-muted: #7888a0;
+      --text-faint: #98a8c0;
+      --accent: #4070c0;
+      --accent-hover: #5080d0;
+    }
+    :root.theme-cream {
+      --bg-body: #f5f2e8;
+      --bg-surface: #fffff5;
+      --bg-raised: #faf8f0;
+      --bg-overlay: #f0ece0;
+      --border: #e0d8c8;
+      --border-light: #cec6b4;
+      --text: #24201a;
+      --text-dim: #605840;
+      --text-muted: #888068;
+      --text-faint: #a8a088;
+      --accent: #a08030;
+      --accent-hover: #b09040;
+    }
+    :root.theme-pearl {
+      --bg-body: #f2f0f4;
+      --bg-surface: #ffffff;
+      --bg-raised: #f8f6fa;
+      --bg-overlay: #ece8f0;
+      --border: #dcd4e2;
+      --border-light: #ccc0d4;
+      --text: #201a24;
+      --text-dim: #605068;
+      --text-muted: #887890;
+      --text-faint: #a898b0;
+      --accent: #8050c0;
+      --accent-hover: #9060d0;
+    }
+    :root.theme-meadow {
+      --bg-body: #eef5f0;
+      --bg-surface: #ffffff;
+      --bg-raised: #f4faf6;
+      --bg-overlay: #e4eee8;
+      --border: #c8dcd0;
+      --border-light: #b4ccc0;
+      --text: #1a241e;
+      --text-dim: #486850;
+      --text-muted: #708878;
+      --text-faint: #90a898;
+      --accent: #308050;
+      --accent-hover: #409060;
+    }
+    :root.theme-coral {
+      --bg-body: #f8f0f0;
+      --bg-surface: #ffffff;
+      --bg-raised: #fcf6f6;
+      --bg-overlay: #f2e8e8;
+      --border: #e4d0d0;
+      --border-light: #d4bcbc;
+      --text: #281a1a;
+      --text-dim: #705050;
+      --text-muted: #987070;
+      --text-faint: #b89090;
+      --accent: #c04050;
+      --accent-hover: #d05060;
+    }
+    :root.theme-lavender-light {
+      --bg-body: #f0eef8;
+      --bg-surface: #ffffff;
+      --bg-raised: #f6f4fc;
+      --bg-overlay: #e8e4f0;
+      --border: #d4d0e4;
+      --border-light: #c0bcd4;
+      --text: #1e1a28;
+      --text-dim: #585068;
+      --text-muted: #807890;
+      --text-faint: #a098b0;
+      --accent: #7050b0;
+      --accent-hover: #8060c0;
+    }
+
+    /* Light theme overrides for hardcoded colors */
+    .theme-frost .text-\[#636366\],
+    .theme-blossom .text-\[#636366\],
+    .theme-mint .text-\[#636366\],
+    .theme-cloud .text-\[#636366\],
+    .theme-peach .text-\[#636366\],
+    .theme-sky .text-\[#636366\],
+    .theme-cream .text-\[#636366\],
+    .theme-pearl .text-\[#636366\],
+    .theme-meadow .text-\[#636366\],
+    .theme-coral .text-\[#636366\],
+    .theme-lavender-light .text-\[#636366\] { color: var(--text-dim) !important; }
+    .theme-frost .text-\[#4a4a50\],
+    .theme-blossom .text-\[#4a4a50\],
+    .theme-mint .text-\[#4a4a50\],
+    .theme-cloud .text-\[#4a4a50\],
+    .theme-peach .text-\[#4a4a50\],
+    .theme-sky .text-\[#4a4a50\],
+    .theme-cream .text-\[#4a4a50\],
+    .theme-pearl .text-\[#4a4a50\],
+    .theme-meadow .text-\[#4a4a50\],
+    .theme-coral .text-\[#4a4a50\],
+    .theme-lavender-light .text-\[#4a4a50\] { color: var(--text-muted) !important; }
+    .theme-frost .text-\[#8e8e93\],
+    .theme-blossom .text-\[#8e8e93\],
+    .theme-mint .text-\[#8e8e93\],
+    .theme-cloud .text-\[#8e8e93\],
+    .theme-peach .text-\[#8e8e93\],
+    .theme-sky .text-\[#8e8e93\],
+    .theme-cream .text-\[#8e8e93\],
+    .theme-pearl .text-\[#8e8e93\],
+    .theme-meadow .text-\[#8e8e93\],
+    .theme-coral .text-\[#8e8e93\],
+    .theme-lavender-light .text-\[#8e8e93\] { color: var(--text-dim) !important; }
+    .theme-frost .text-\[#36363b\],
+    .theme-blossom .text-\[#36363b\],
+    .theme-mint .text-\[#36363b\],
+    .theme-cloud .text-\[#36363b\],
+    .theme-peach .text-\[#36363b\],
+    .theme-sky .text-\[#36363b\],
+    .theme-cream .text-\[#36363b\],
+    .theme-pearl .text-\[#36363b\],
+    .theme-meadow .text-\[#36363b\],
+    .theme-coral .text-\[#36363b\],
+    .theme-lavender-light .text-\[#36363b\] { color: var(--text-muted) !important; }
+    .theme-frost .text-\[#2a2a2e\],
+    .theme-blossom .text-\[#2a2a2e\],
+    .theme-mint .text-\[#2a2a2e\],
+    .theme-cloud .text-\[#2a2a2e\],
+    .theme-peach .text-\[#2a2a2e\],
+    .theme-sky .text-\[#2a2a2e\],
+    .theme-cream .text-\[#2a2a2e\],
+    .theme-pearl .text-\[#2a2a2e\],
+    .theme-meadow .text-\[#2a2a2e\],
+    .theme-coral .text-\[#2a2a2e\],
+    .theme-lavender-light .text-\[#2a2a2e\] { color: var(--text-dim) !important; }
+    .theme-frost .border-border,
+    .theme-blossom .border-border,
+    .theme-mint .border-border,
+    .theme-cloud .border-border,
+    .theme-peach .border-border,
+    .theme-sky .border-border,
+    .theme-cream .border-border,
+    .theme-pearl .border-border,
+    .theme-meadow .border-border,
+    .theme-coral .border-border,
+    .theme-lavender-light .border-border { border-color: var(--border) !important; }
+    .theme-frost .bg-surface,
+    .theme-blossom .bg-surface,
+    .theme-mint .bg-surface,
+    .theme-cloud .bg-surface,
+    .theme-peach .bg-surface,
+    .theme-sky .bg-surface,
+    .theme-cream .bg-surface,
+    .theme-pearl .bg-surface,
+    .theme-meadow .bg-surface,
+    .theme-coral .bg-surface,
+    .theme-lavender-light .bg-surface { background: var(--bg-surface) !important; }
+    .theme-frost .bg-raised,
+    .theme-blossom .bg-raised,
+    .theme-mint .bg-raised,
+    .theme-cloud .bg-raised,
+    .theme-peach .bg-raised,
+    .theme-sky .bg-raised,
+    .theme-cream .bg-raised,
+    .theme-pearl .bg-raised,
+    .theme-meadow .bg-raised,
+    .theme-coral .bg-raised,
+    .theme-lavender-light .bg-raised { background: var(--bg-raised) !important; }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans TC', 'Inter', system-ui, sans-serif;
+      background: var(--bg-body);
+      color: var(--text);
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+    /* Animations */
+    .fade-in { animation: fadeIn 0.25s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .pulse { animation: pulse-dot 2s ease-in-out infinite; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+    /* Cards */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .card:hover {
+      border-color: var(--border-light);
+      box-shadow: 0 0 0 1px rgba(110, 86, 207, 0.06);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.12s ease; border: 1px solid transparent;
+      white-space: nowrap; user-select: none;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: var(--bg-raised); color: var(--text); border-color: var(--border); }
+    .btn-secondary:hover { background: var(--border); border-color: var(--border-light); }
+    .btn-ghost { background: transparent; color: var(--text-dim); }
+    .btn-ghost:hover { background: var(--bg-raised); color: var(--text); }
+    .btn-danger { background: #e5484d18; color: #e5484d; border-color: #e5484d30; }
+    .btn-danger:hover { background: #e5484d28; border-color: #e5484d50; }
+    .btn-glow {
+      background: linear-gradient(135deg, var(--accent), #9b6eff);
+      color: #fff; border: none;
+      box-shadow: 0 2px 12px rgba(110, 86, 207, 0.3);
+    }
+    .btn-glow:hover {
+      box-shadow: 0 4px 20px rgba(110, 86, 207, 0.45);
+      transform: translateY(-1px);
+    }
+    .btn-glow:active { transform: translateY(0) scale(0.98); }
+
+    /* Inputs */
+    .input {
+      background: var(--bg-overlay); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 12px; border-radius: 7px; font-size: 13px; width: 100%;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(110, 86, 207, 0.15); }
+    .input::placeholder { color: var(--text-faint); }
+    select.input { cursor: pointer; }
+
+    /* Tabs */
+    .tab {
+      padding: 10px 18px; cursor: pointer; font-size: 13px; font-weight: 500;
+      color: var(--text-muted); border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      position: relative;
+    }
+    .tab:hover { color: #b0b0b4; }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    /* Hero cards */
+    .hero-card {
+      display: flex; align-items: center; gap: 14px; padding: 12px 16px;
+      border-bottom: 1px solid var(--bg-raised); transition: background 0.1s;
+    }
+    .hero-card:last-child { border-bottom: none; }
+    .hero-card:hover { background: var(--bg-raised); }
+    .hero-thumb {
+      width: 64px; height: 64px; object-fit: contain; border-radius: 8px;
+      background: var(--bg-overlay); border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .hero-thumb-placeholder {
+      width: 64px; height: 64px; border-radius: 8px; flex-shrink: 0;
+      background: var(--bg-raised); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 600; color: var(--border-light);
+    }
+
+    /* Status */
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .dot-success { background: #30a46c; box-shadow: 0 0 6px #30a46c60; }
+    .dot-failed { background: #e5484d; }
+    .dot-partial { background: #f5a623; }
+    .dot-idle { background: var(--border-light); }
+    .dot-running { background: var(--accent); animation: pulse-dot 1.5s ease-in-out infinite; }
+
+    /* Badge */
+    .badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 500;
+    }
+    .badge-ready { background: #30a46c18; color: #30a46c; }
+    .badge-partial { background: #f5a62318; color: #f5a623; }
+    .badge-type { background: color-mix(in srgb, var(--accent) 20%, transparent); color: #9b8aff; }
+
+    /* Log */
+    .log-panel {
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.7;
+      padding: 12px 0; overflow-y: auto;
+      max-height: calc(100vh - 220px);
+    }
+    .log-line { padding: 1px 16px; color: var(--text-dim); }
+    .log-line:hover { background: var(--bg-raised); }
+    .log-line-info { color: var(--text-dim); }
+    .log-line-warn { color: #f5a623; }
+    .log-line-error { color: #e5484d; }
+    .log-line-success { color: #30a46c; }
+
+    /* Checkbox */
+    input[type="checkbox"] {
+      width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer;
+      border-radius: 4px; flex-shrink: 0;
+    }
+
+    /* Stats */
+    .stat { text-align: center; }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="border-b border-border px-6 py-3 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 6V10L8 14L2 10V6L8 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </div>
+        <h1 class="text-sm font-semibold tracking-tight">DawnAssetHelper</h1>
+      </div>
+      <span class="text-[11px] text-[#636366] mono">v0.9</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="status-dot" class="dot dot-idle"></span>
+      <span id="status-text" class="text-xs text-[#636366]" data-i18n="status.idle">閒置</span>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="border-b border-border px-6 flex gap-0 flex-shrink-0">
+    <div class="tab active" data-tab="library" onclick="switchTab('library')">
+      <span class="flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span data-i18n="tab.library">圖鑑</span>
+      </span>
+    </div>
+    <div class="tab" data-tab="run" onclick="switchTab('run')">
+      <span class="flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span data-i18n="tab.run">執行</span>
+      </span>
+    </div>
+    <div class="tab" data-tab="settings" onclick="switchTab('settings')">
+      <span class="flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <span data-i18n="tab.settings">設定</span>
+      </span>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-hidden">
+    <!-- Library Tab -->
+    <div id="tab-library" class="tab-content h-full overflow-y-auto p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h2 class="text-base font-semibold" data-i18n="library.title">英雄圖鑑</h2>
+          <p class="text-xs text-[#636366] mt-0.5" data-i18n="library.desc">已處理的英雄資源總覽</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary" onclick="loadLibrary()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span data-i18n="library.refresh">重新整理</span>
+          </button>
+          <button class="btn btn-danger text-xs" onclick="cleanAllTemp()">🧹 清理暫存</button>
+        </div>
+      </div>
+      <div id="library-grid">
+          <div class="text-[#636366] text-sm text-center py-20" data-i18n="library.loading">載入中...</div>
+      </div>
+    </div>
+
+    <!-- Hero Detail Panel (overlay) -->
+    <div id="hero-detail-overlay" class="fixed inset-0 z-50 hidden" style="background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);" onclick="if(event.target===this)closeHeroDetail()">
+      <div class="absolute right-0 top-0 bottom-0 w-full max-w-2xl bg-surface border-l border-border overflow-y-auto fade-in">
+        <div class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-border" style="background:var(--bg-surface);">
+          <div class="flex items-center gap-3">
+            <button class="btn btn-ghost px-2" onclick="closeHeroDetail()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 id="detail-hero-id" class="text-base font-semibold"></h2>
+                <span id="detail-type-badge" class="badge badge-type"></span>
+              </div>
+              <div id="detail-hero-name-row" class="mt-0.5">
+                <input id="detail-hero-name" class="input text-xs py-1 px-2" style="width:200px" placeholder="英雄名稱（可選）" onchange="saveHeroMeta()">
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <select id="detail-type-select" class="input text-xs py-1" style="width:100px" onchange="saveHeroMeta()">
+              <option value="Original">原創</option>
+              <option value="Collab">合作</option>
+              <option value="Skin">Skin</option>
+              <option value="Unknown">未知</option>
+            </select>
+          </div>
+        </div>
+        <div id="detail-body" class="px-6 py-4"></div>
+      </div>
+    </div>
+
+    <!-- Run Tab -->
+    <div id="tab-run" class="tab-content hidden h-full flex flex-col lg:flex-row">
+      <!-- Left: Hero List -->
+      <div class="lg:w-80 xl:w-96 border-r border-border flex flex-col flex-shrink-0">
+        <div class="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h3 class="text-sm font-medium" data-i18n="library.title">英雄列表</h3>
+          <div class="flex gap-1">
+            <button class="btn btn-ghost text-xs px-2 py-1" onclick="selectAll(true)" data-i18n="library.select_all">全選</button>
+            <button class="btn btn-ghost text-xs px-2 py-1" onclick="selectAll(false)" data-i18n="library.clear">清除</button>
+            <button class="btn btn-ghost text-xs px-2 py-1" onclick="filterType('Original')" data-i18n="library.type.original">原創</button>
+            <button class="btn btn-ghost text-xs px-2 py-1" onclick="filterType('Collab')" data-i18n="library.type.collab">合作</button>
+            <button class="btn btn-ghost text-xs px-2 py-1" onclick="filterType('Skin')">Skin</button>
+            <button class="btn btn-ghost text-xs px-2 py-1" onclick="filterType(null)" data-i18n="library.filter.all">全部</button>
+          </div>
+        </div>
+        <div class="px-4 py-2 border-b border-border">
+          <button class="btn btn-secondary w-full" onclick="scanHeroes()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span data-i18n="library.scan">掃描 AssetBundle</span>
+          </button>
+        </div>
+        <div id="hero-list" class="flex-1 overflow-y-auto" style="max-height: calc(100vh - 260px);">
+          <div class="text-[#636366] text-sm text-center py-12" data-i18n="library.scan_hint">點擊「掃描」載入英雄列表</div>
+        </div>
+        <div id="hero-count" class="px-4 py-2 border-t border-border text-xs text-[#636366]"></div>
+      </div>
+
+      <!-- Right: Controls & Log -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- Action Bar -->
+        <div class="px-5 py-3 border-b border-border">
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-secondary" onclick="runMode('extract_only')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span data-i18n="run.extract">解包</span>
+            </button>
+            <button class="btn btn-secondary" onclick="runMode('unpack_only')" data-i18n="run.unpack">拆圖</button>
+            <button class="btn btn-secondary" onclick="runMode('extract_and_unpack')" data-i18n="run.extract_and_unpack">解包 + 拆圖</button>
+            <div class="w-px h-6 bg-border self-center"></div>
+            <button class="btn btn-glow" onclick="runMode('gif_only')" data-i18n="run.gif_only">GIF 匯出</button>
+            <button class="btn btn-glow" onclick="runMode('extract_and_gif')" data-i18n="run.extract_and_gif">解包 + GIF</button>
+            <button class="btn btn-primary" onclick="runMode('full')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span data-i18n="run.full">一鍵完成</span>
+            </button>
+            <div class="w-px h-6 bg-border self-center"></div>
+            <button class="btn btn-danger" onclick="stopRun()" data-i18n="run.stop">停止</button>
+          </div>
+        </div>
+
+        <!-- Log Panel -->
+        <div class="flex-1 flex flex-col min-h-0">
+          <div class="px-5 py-2 border-b border-border flex items-center justify-between">
+            <span class="text-xs text-[#636366] mono" data-i18n="run.log">即時日誌</span>
+            <button class="btn btn-ghost text-xs px-2 py-0.5" onclick="clearLog()" data-i18n="run.clear_log">清除</button>
+          </div>
+          <div id="log-panel" class="log-panel flex-1">
+            <div class="log-line text-[#4a4a50]" data-i18n="run.waiting">等待執行...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="tab-settings" class="tab-content hidden h-full overflow-y-auto p-6">
+      <div class="max-w-2xl mx-auto">
+        <h2 class="text-base font-semibold mb-1" data-i18n="settings.title">設定</h2>
+        <p class="text-xs text-[#636366] mb-6" data-i18n="settings.desc">配置外部工具路徑與匯出選項</p>
+
+        <div class="space-y-5">
+          <!-- Theme -->
+          <div class="card p-4">
+            <label class="text-xs font-medium text-[#8e8e93] block mb-3" data-i18n="settings.theme">介面主題</label>
+
+            <!-- Low brightness (dark) -->
+            <div class="mb-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] text-[#636366]">低亮度 Dark</span>
+                <button class="btn btn-ghost text-[10px] px-1.5 py-0.5" onclick="toggleThemeSection('dark')">展開</button>
+              </div>
+              <div class="grid grid-cols-5 gap-2" id="theme-grid-dark">
+                <button class="card p-2 cursor-pointer text-center transition-all ring-2 ring-[#6e56cf]" data-theme="" onclick="setTheme('')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #0c0c0e 50%, #19191b 50%)"></div>
+                  <span class="text-[11px]">Dark</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="night" onclick="setTheme('night')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #0a0e1a 50%, #131825 50%)"></div>
+                  <span class="text-[11px]">Night</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="charcoal" onclick="setTheme('charcoal')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #161618 50%, #222224 50%)"></div>
+                  <span class="text-[11px]">Charcoal</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="abyss" onclick="setTheme('abyss')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #040406 50%, #0c0c10 50%)"></div>
+                  <span class="text-[11px]">Abyss</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="midnight" onclick="setTheme('midnight')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #06080e 50%, #0e1118 50%)"></div>
+                  <span class="text-[11px]">Midnight</span>
+                </button>
+              </div>
+              <div class="grid grid-cols-5 gap-2 mt-2 hidden" id="theme-grid-dark-extra">
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="ember" onclick="setTheme('ember')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #120e0c 50%, #1c1614 50%)"></div>
+                  <span class="text-[11px]">Ember</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="wine" onclick="setTheme('wine')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #100a0c 50%, #1a1214 50%)"></div>
+                  <span class="text-[11px]">Wine</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="forest" onclick="setTheme('forest')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #0a0e0a 50%, #141a14 50%)"></div>
+                  <span class="text-[11px]">Forest</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="sage" onclick="setTheme('sage')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #0c110e 50%, #141c17 50%)"></div>
+                  <span class="text-[11px]">Sage</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="ocean" onclick="setTheme('ocean')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #0c0e14 50%, #141822 50%)"></div>
+                  <span class="text-[11px]">Ocean</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="storm" onclick="setTheme('storm')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #0a0c12 50%, #121620 50%)"></div>
+                  <span class="text-[11px]">Storm</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="slate" onclick="setTheme('slate')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #101216 50%, #181c22 50%)"></div>
+                  <span class="text-[11px]">Slate</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="lavender" onclick="setTheme('lavender')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #100e16 50%, #1a1722 50%)"></div>
+                  <span class="text-[11px]">Lavender</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="dusk" onclick="setTheme('dusk')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #0e0c12 50%, #18161e 50%)"></div>
+                  <span class="text-[11px]">Dusk</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="rose" onclick="setTheme('rose')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #140e10 50%, #1e1618 50%)"></div>
+                  <span class="text-[11px]">Rose</span>
+                </button>
+                <button class="card p-2 cursor-pointer text-center transition-all" data-theme="sand" onclick="setTheme('sand')">
+                  <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #141210 50%, #1e1c18 50%)"></div>
+                  <span class="text-[11px]">Sand</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Medium brightness -->
+            <div class="mb-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] text-[#636366]">中亮度 Medium</span>
+                <button class="btn btn-ghost text-[10px] px-1.5 py-0.5" onclick="toggleThemeSection('medium')">展開</button>
+              </div>
+              <div class="hidden" id="theme-grid-medium">
+                <div class="grid grid-cols-5 gap-2">
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="twilight" onclick="setTheme('twilight')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #2a2430 50%, #342e3c 50%)"></div>
+                    <span class="text-[11px]">Twilight</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="plum" onclick="setTheme('plum')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #241e28 50%, #2e2834 50%)"></div>
+                    <span class="text-[11px]">Plum</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="driftwood" onclick="setTheme('driftwood')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #2a2620 50%, #34302a 50%)"></div>
+                    <span class="text-[11px]">Driftwood</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="copper" onclick="setTheme('copper')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #2a201a 50%, #342a22 50%)"></div>
+                    <span class="text-[11px]">Copper</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="canyon" onclick="setTheme('canyon')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #2a1e18 50%, #342820 50%)"></div>
+                    <span class="text-[11px]">Canyon</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="moss" onclick="setTheme('moss')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #1e261e 50%, #283028 50%)"></div>
+                    <span class="text-[11px]">Moss</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="steel" onclick="setTheme('steel')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #22262a 50%, #2c3036 50%)"></div>
+                    <span class="text-[11px]">Steel</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- High brightness (light) -->
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] text-[#636366]">高亮度 Light</span>
+                <button class="btn btn-ghost text-[10px] px-1.5 py-0.5" onclick="toggleThemeSection('light')">展開</button>
+              </div>
+              <div class="hidden" id="theme-grid-light">
+                <div class="grid grid-cols-5 gap-2">
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="frost" onclick="setTheme('frost')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f0f2f5 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Frost</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="cloud" onclick="setTheme('cloud')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #e8eaee 50%, #f5f7fa 50%)"></div>
+                    <span class="text-[11px]">Cloud</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="sky" onclick="setTheme('sky')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #eef2f8 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Sky</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="pearl" onclick="setTheme('pearl')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f2f0f4 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Pearl</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="lavender-light" onclick="setTheme('lavender-light')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f0eef8 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Lavender</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="blossom" onclick="setTheme('blossom')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f5f0f4 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Blossom</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="coral" onclick="setTheme('coral')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f8f0f0 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Coral</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="peach" onclick="setTheme('peach')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f5f0ec 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Peach</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="cream" onclick="setTheme('cream')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f5f2e8 50%, #fffff5 50%)"></div>
+                    <span class="text-[11px]">Cream</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="mint" onclick="setTheme('mint')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #f0f5f2 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Mint</span>
+                  </button>
+                  <button class="card p-2 cursor-pointer text-center transition-all" data-theme="meadow" onclick="setTheme('meadow')">
+                    <div class="w-full h-8 rounded mb-1.5" style="background: linear-gradient(135deg, #eef5f0 50%, #ffffff 50%)"></div>
+                    <span class="text-[11px]">Meadow</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Language -->
+          <div class="card p-4">
+            <label class="text-xs font-medium text-[#8e8e93] block mb-2" data-i18n="settings.language">語言</label>
+            <select id="cfg-lang" class="input" onchange="setLang(this.value)">
+              <option value="zh-TW">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+              <option value="ko">한국어</option>
+              <option value="ru">Русский</option>
+            </select>
+          </div>
+
+          <!-- AB Folder -->
+          <div class="card p-4">
+            <label class="text-xs font-medium text-[#8e8e93] block mb-2" data-i18n="settings.ab_folder">遊戲資源目錄</label>
+            <p class="text-[11px] text-[#636366] mb-2" data-i18n="settings.ab_folder_desc">AssetBundle 所在資料夾，例如 Steam 安裝目錄下的 ab 資料夾</p>
+            <input id="cfg-ab-folder" type="text" class="input" placeholder="C:\...\Doomsday_Data\StreamingAssets\ab">
+          </div>
+
+          <!-- Tools -->
+          <div class="card p-4">
+            <label class="text-xs font-medium text-[#8e8e93] block mb-3" data-i18n="settings.tools">外部工具路徑</label>
+            <div class="space-y-3">
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.as_cli">AssetStudio CLI</label>
+                <input id="cfg-as-path" type="text" class="input" placeholder="D:\...\AssetStudio.CLI.exe">
+              </div>
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.spine_cli">Spine Pro CLI</label>
+                <input id="cfg-spine-path" type="text" class="input" placeholder="D:\...\Spine.com">
+              </div>
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.spine_exporter">spine-export-cli（GitHub 開源版）</label>
+                <input id="cfg-exporter-path" type="text" class="input" placeholder="C:\Users\...\npm\spine-export-cli.cmd">
+              </div>
+            </div>
+          </div>
+
+          <!-- GIF Engine -->
+          <div class="card p-4">
+            <label class="text-xs font-medium text-[#8e8e93] block mb-2" data-i18n="settings.gif_engine">GIF 匯出引擎</label>
+            <p class="text-[11px] text-[#636366] mb-3" data-i18n="settings.gif_engine_desc">spine-exporter 無需 Spine Pro 授權，直接讀取 .skel + .atlas + .png 匯出 GIF</p>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="card p-3 cursor-pointer flex items-center gap-3 hover:border-accent has-[:checked]:border-accent has-[:checked]:bg-accent-muted transition-colors">
+                <input type="radio" name="gif-engine" value="spine_cli" class="accent-[#6e56cf]">
+                <div>
+                  <div class="text-sm font-medium">Spine Pro CLI</div>
+                  <div class="text-[11px] text-[#636366]" data-i18n="settings.gif_engine.spine_cli_desc">需要安裝 Spine Pro</div>
+                </div>
+              </label>
+              <label class="card p-3 cursor-pointer flex items-center gap-3 hover:border-accent has-[:checked]:border-accent has-[:checked]:bg-accent-muted transition-colors">
+                <input type="radio" name="gif-engine" value="spine_exporter" class="accent-[#6e56cf]">
+                <div>
+                  <div class="text-sm font-medium">spine-exporter</div>
+                  <div class="text-[11px] text-[#636366]" data-i18n="settings.gif_engine.spine_exporter_desc">開源免費，支援 3.8.x</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- GIF Export Settings -->
+          <div class="card p-4">
+            <label class="text-xs font-medium text-[#8e8e93] block mb-3" data-i18n="settings.gif_params">GIF 匯出參數（spine-exporter）</label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.fps">FPS（幀率）</label>
+                <input id="cfg-fps" type="number" class="input" min="1" max="60" value="30">
+              </div>
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.scale">縮放比例</label>
+                <input id="cfg-scale" type="number" class="input" min="0.1" max="5" step="0.1" value="1.0">
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input id="cfg-pma" type="checkbox" class="accent-[#6e56cf]">
+                <span class="text-xs text-[#636366]" data-i18n="settings.pma">使用 Premultiplied Alpha（PMA）</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Spine Pro GIF Re-encode -->
+          <div class="card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <label class="text-xs font-medium text-[#8e8e93]" data-i18n="settings.spinepro">Spine Pro GIF 匯出設定</label>
+              <button class="btn text-[11px] px-2 py-0.5" onclick="restoreSpineProDefaults()" data-i18n="settings.spinepro.restore" title="還原為 Spine Pro 預設值">還原預設</button>
+            </div>
+            <p class="text-[11px] text-[#636366] mb-3" data-i18n="settings.spinepro_desc">使用 ffmpeg 以 Spine Pro 參數重新編碼 GIF 調色板。FPS 與縮放請在上方「GIF 匯出參數」設定</p>
+            <div class="mb-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input id="cfg-spinepro-reencode" type="checkbox" class="accent-[#6e56cf]">
+                <span class="text-xs text-[#e0e0e0]" data-i18n="settings.spinepro.enable">啟用重新編碼</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.spinepro.colors">顏色</label>
+                <input id="cfg-sp-colors" type="number" class="input" min="2" max="256" value="238">
+              </div>
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.spinepro.color_dither">顏色遞色</label>
+                <input id="cfg-sp-color-dither" type="number" class="input" min="0" max="100" value="50">
+              </div>
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.spinepro.quality">品質</label>
+                <input id="cfg-sp-quality" type="number" class="input" min="1" max="31" value="8">
+              </div>
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.spinepro.alpha_thresh">透明底標</label>
+                <input id="cfg-sp-alpha-thresh" type="number" class="input" min="0" max="255" value="8">
+              </div>
+              <div>
+                <label class="text-xs text-[#636366] block mb-1" data-i18n="settings.spinepro.alpha_dither">Alpha 遞色</label>
+                <input id="cfg-sp-alpha-dither" type="number" class="input" min="0" max="100" value="40">
+              </div>
+              <div class="flex items-end">
+                <label class="flex items-center gap-2 cursor-pointer pb-1">
+                  <input id="cfg-sp-loop" type="checkbox" class="accent-[#6e56cf]" checked>
+                  <span class="text-xs text-[#636366]" data-i18n="settings.spinepro.loop">永久循環</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button class="btn btn-primary" onclick="saveConfig()" data-i18n="settings.save">儲存設定</button>
+            <span id="cfg-status" class="text-xs text-[#30a46c]"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Theme
+    const THEMES = ['', 'night', 'charcoal', 'abyss', 'midnight', 'ember', 'wine', 'forest', 'sage', 'ocean', 'storm', 'slate', 'lavender', 'dusk', 'rose', 'sand', 'twilight', 'plum', 'driftwood', 'copper', 'canyon', 'moss', 'steel', 'frost', 'cloud', 'sky', 'pearl', 'lavender-light', 'blossom', 'coral', 'peach', 'cream', 'mint', 'meadow'];
+
+    function setTheme(name) {
+      document.documentElement.className = name ? `theme-${name}` : '';
+      localStorage.setItem('dawn-theme', name);
+      document.querySelectorAll('[id^="theme-grid"] button').forEach(b => {
+        b.classList.toggle('ring-2', b.dataset.theme === name);
+        b.classList.toggle('ring-[#6e56cf]', b.dataset.theme === name);
+      });
+    }
+
+    function toggleThemeSection(section) {
+      const extra = document.getElementById(`theme-grid-${section}-extra`);
+      const main = document.getElementById(`theme-grid-${section}`);
+      const target = extra || main;
+      if (target) {
+        target.classList.toggle('hidden');
+        const parent = target.parentElement;
+        const btn = parent.querySelector('button');
+        if (btn) btn.textContent = target.classList.contains('hidden') ? '展開' : '收起';
+      }
+    }
+
+    (function() {
+      const saved = localStorage.getItem('dawn-theme') || '';
+      if (saved) setTheme(saved);
+    })();
+
+    // i18n
+    const LOCALES = {
+      'zh-TW': {
+        'tab.library': '圖鑑', 'tab.run': '執行', 'tab.settings': '設定',
+        'status.idle': '閒置', 'status.running': '執行中', 'status.done': '已完成',
+        'library.title': '英雄圖鑑', 'library.desc': '已處理的英雄資源總覽', 'library.refresh': '重新整理',
+        'library.loading': '載入中...', 'library.empty': '尚無已處理的英雄', 'library.empty_hint': '前往「執行」頁籤開始解包與匯出',
+        'library.scan': '掃描 AssetBundle', 'library.scan_hint': '點擊「掃描」載入英雄列表',
+        'library.select_all': '全選', 'library.clear': '清除',
+        'library.type.original': '原創', 'library.type.collab': '合作', 'library.type.unknown': '未知',
+        'library.filter.all': '全部', 'library.files': '檔案', 'library.hero_count': '顯示 {0} / {1} 個英雄',
+        'library.ready': '就緒', 'library.incomplete': '不完整', 'library.not_found': '找不到英雄',
+        'library.hero.skeleton': '骨架', 'library.hero.atlas': '圖集', 'library.hero.texture': '貼圖',
+        'library.status.success': '完成', 'library.status.failed': '失敗',
+        'run.extract': '解包', 'run.unpack': '拆圖', 'run.extract_and_unpack': '解包 + 拆圖',
+        'run.gif_only': 'GIF 匯出', 'run.extract_and_gif': '解包 + GIF', 'run.full': '一鍵完成',
+        'run.stop': '停止', 'run.log': '即時日誌', 'run.clear_log': '清除', 'run.waiting': '等待執行...',
+        'run.select_hero': '請先勾選要處理的英雄', 'run.started': '已啟動：', 'run.stopped': '已送出停止請求...',
+        'settings.title': '設定', 'settings.desc': '配置外部工具路徑與匯出選項',
+        'settings.theme': '介面主題', 'settings.language': '語言',
+        'settings.ab_folder': '遊戲資源目錄', 'settings.ab_folder_desc': 'AssetBundle 所在資料夾，例如 Steam 安裝目錄下的 ab 資料夾',
+        'settings.tools': '外部工具路徑', 'settings.as_cli': 'AssetStudio CLI',
+        'settings.spine_cli': 'Spine Pro CLI', 'settings.spine_exporter': 'spine-export-cli（GitHub 開源版）',
+        'settings.gif_engine': 'GIF 匯出引擎', 'settings.gif_engine_desc': 'spine-exporter 無需 Spine Pro 授權，直接讀取 .skel + .atlas + .png 匯出 GIF',
+        'settings.gif_engine.spine_cli': 'Spine Pro CLI', 'settings.gif_engine.spine_cli_desc': '需要安裝 Spine Pro',
+        'settings.gif_engine.spine_exporter': 'spine-exporter', 'settings.gif_engine.spine_exporter_desc': '開源免費，支援 3.8.x',
+        'settings.gif_params': 'GIF 匯出參數（spine-exporter）', 'settings.fps': 'FPS（幀率）',
+        'settings.scale': '縮放比例', 'settings.pma': '使用 Premultiplied Alpha（PMA）',
+        'settings.spinepro': 'Spine Pro GIF 匯出設定', 'settings.spinepro_desc': '使用 ffmpeg 以 Spine Pro 參數重新編碼 GIF 調色板。FPS 與縮放請在上方「GIF 匯出參數」設定',
+        'settings.spinepro.enable': '啟用重新編碼', 'settings.spinepro.colors': '顏色',
+        'settings.spinepro.color_dither': '顏色遞色', 'settings.spinepro.quality': '品質',
+        'settings.spinepro.alpha_thresh': '透明底標', 'settings.spinepro.alpha_dither': 'Alpha 遞色',
+        'settings.spinepro.loop': '永久循環', 'settings.spinepro.restore': '還原預設',
+        'settings.save': '儲存設定', 'settings.saved': '已儲存',
+      },
+      'zh-CN': {
+        'tab.library': '图鉴', 'tab.run': '执行', 'tab.settings': '设置',
+        'status.idle': '空闲', 'status.running': '执行中', 'status.done': '已完成',
+        'library.title': '英雄图鉴', 'library.desc': '已处理的英雄资源总览', 'library.refresh': '刷新',
+        'library.loading': '加载中...', 'library.empty': '尚无已处理的英雄', 'library.empty_hint': '前往「执行」页签开始解包与导出',
+        'library.scan': '扫描 AssetBundle', 'library.scan_hint': '点击「扫描」加载英雄列表',
+        'library.select_all': '全选', 'library.clear': '清除',
+        'library.type.original': '原创', 'library.type.collab': '合作', 'library.type.unknown': '未知',
+        'library.filter.all': '全部', 'library.files': '文件', 'library.hero_count': '显示 {0} / {1} 个英雄',
+        'library.ready': '就绪', 'library.incomplete': '不完整', 'library.not_found': '找不到英雄',
+        'library.hero.skeleton': '骨架', 'library.hero.atlas': '图集', 'library.hero.texture': '贴图',
+        'library.status.success': '完成', 'library.status.failed': '失败',
+        'run.extract': '解包', 'run.unpack': '拆图', 'run.extract_and_unpack': '解包 + 拆图',
+        'run.gif_only': 'GIF 导出', 'run.extract_and_gif': '解包 + GIF', 'run.full': '一键完成',
+        'run.stop': '停止', 'run.log': '实时日志', 'run.clear_log': '清除', 'run.waiting': '等待执行...',
+        'run.select_hero': '请先勾选要处理的英雄', 'run.started': '已启动：', 'run.stopped': '已发送停止请求...',
+        'settings.title': '设置', 'settings.desc': '配置外部工具路径与导出选项',
+        'settings.theme': '界面主题', 'settings.language': '语言',
+        'settings.ab_folder': '游戏资源目录', 'settings.ab_folder_desc': 'AssetBundle 所在文件夹',
+        'settings.tools': '外部工具路径', 'settings.as_cli': 'AssetStudio CLI',
+        'settings.spine_cli': 'Spine Pro CLI', 'settings.spine_exporter': 'spine-export-cli（GitHub 开源版）',
+        'settings.gif_engine': 'GIF 导出引擎', 'settings.gif_engine_desc': 'spine-exporter 无需 Spine Pro 授权，直接读取 .skel + .atlas + .png 导出 GIF',
+        'settings.gif_engine.spine_cli': 'Spine Pro CLI', 'settings.gif_engine.spine_cli_desc': '需要安装 Spine Pro',
+        'settings.gif_engine.spine_exporter': 'spine-exporter', 'settings.gif_engine.spine_exporter_desc': '开源免费，支持 3.8.x',
+        'settings.gif_params': 'GIF 导出参数（spine-exporter）', 'settings.fps': 'FPS（帧率）',
+        'settings.scale': '缩放比例', 'settings.pma': '使用 Premultiplied Alpha（PMA）',
+        'settings.spinepro': 'Spine Pro GIF 导出设置', 'settings.spinepro_desc': '使用 ffmpeg 以 Spine Pro 参数重新编码 GIF 调色板。FPS 与缩放请在上方「GIF 导出参数」设置',
+        'settings.spinepro.enable': '启用重新编码', 'settings.spinepro.colors': '颜色',
+        'settings.spinepro.color_dither': '颜色递色', 'settings.spinepro.quality': '品质',
+        'settings.spinepro.alpha_thresh': '透明底标', 'settings.spinepro.alpha_dither': 'Alpha 递色',
+        'settings.spinepro.loop': '永久循环', 'settings.spinepro.restore': '还原默认',
+        'settings.save': '保存设置', 'settings.saved': '已保存',
+      },
+      'en': {
+        'tab.library': 'Library', 'tab.run': 'Run', 'tab.settings': 'Settings',
+        'status.idle': 'Idle', 'status.running': 'Running', 'status.done': 'Done',
+        'library.title': 'Hero Library', 'library.desc': 'Processed hero assets overview', 'library.refresh': 'Refresh',
+        'library.loading': 'Loading...', 'library.empty': 'No heroes processed yet', 'library.empty_hint': 'Go to the "Run" tab to start extracting and exporting',
+        'library.scan': 'Scan AssetBundle', 'library.scan_hint': 'Click "Scan" to load hero list',
+        'library.select_all': 'Select All', 'library.clear': 'Clear',
+        'library.type.original': 'Original', 'library.type.collab': 'Collab', 'library.type.unknown': 'Unknown',
+        'library.filter.all': 'All', 'library.files': 'files', 'library.hero_count': 'Showing {0} / {1} heroes',
+        'library.ready': 'Ready', 'library.incomplete': 'Incomplete', 'library.not_found': 'No heroes found',
+        'library.hero.skeleton': 'Skeleton', 'library.hero.atlas': 'Atlas', 'library.hero.texture': 'Texture',
+        'library.status.success': 'Done', 'library.status.failed': 'Failed',
+        'run.extract': 'Extract', 'run.unpack': 'Unpack', 'run.extract_and_unpack': 'Extract + Unpack',
+        'run.gif_only': 'GIF Export', 'run.extract_and_gif': 'Extract + GIF', 'run.full': 'Full Pipeline',
+        'run.stop': 'Stop', 'run.log': 'Live Log', 'run.clear_log': 'Clear', 'run.waiting': 'Waiting...',
+        'run.select_hero': 'Please select heroes first', 'run.started': 'Started: ', 'run.stopped': 'Stop requested...',
+        'settings.title': 'Settings', 'settings.desc': 'Configure external tools and export options',
+        'settings.theme': 'Theme', 'settings.language': 'Language',
+        'settings.ab_folder': 'Game Assets Folder', 'settings.ab_folder_desc': 'AssetBundle directory',
+        'settings.tools': 'External Tools', 'settings.as_cli': 'AssetStudio CLI',
+        'settings.spine_cli': 'Spine Pro CLI', 'settings.spine_exporter': 'spine-export-cli (GitHub)',
+        'settings.gif_engine': 'GIF Export Engine', 'settings.gif_engine_desc': 'spine-exporter requires no Spine Pro license, reads .skel + .atlas + .png directly',
+        'settings.gif_engine.spine_cli': 'Spine Pro CLI', 'settings.gif_engine.spine_cli_desc': 'Requires Spine Pro',
+        'settings.gif_engine.spine_exporter': 'spine-exporter', 'settings.gif_engine.spine_exporter_desc': 'Free & open source, supports 3.8.x',
+        'settings.gif_params': 'GIF Export Settings (spine-exporter)', 'settings.fps': 'FPS',
+        'settings.scale': 'Scale', 'settings.pma': 'Premultiplied Alpha (PMA)',
+        'settings.spinepro': 'Spine Pro GIF Preset', 'settings.spinepro_desc': 'Re-encode GIF palette with ffmpeg using Spine Pro parameters. Set FPS and scale in the section above.',
+        'settings.spinepro.enable': 'Enable Re-encode', 'settings.spinepro.colors': 'Colors',
+        'settings.spinepro.color_dither': 'Color Dither', 'settings.spinepro.quality': 'Quality',
+        'settings.spinepro.alpha_thresh': 'Alpha Threshold', 'settings.spinepro.alpha_dither': 'Alpha Dither',
+        'settings.spinepro.loop': 'Loop Forever', 'settings.spinepro.restore': 'Restore Defaults',
+        'settings.save': 'Save Settings', 'settings.saved': 'Saved',
+      },
+      'ja': {
+        'tab.library': '図鑑', 'tab.run': '実行', 'tab.settings': '設定',
+        'status.idle': '待機中', 'status.running': '実行中', 'status.done': '完了',
+        'library.title': 'ヒーロー図鑑', 'library.desc': '処理済みヒーローの概要', 'library.refresh': '更新',
+        'library.loading': '読み込み中...', 'library.empty': '処理済みヒーローなし', 'library.empty_hint': '「実行」タブから解凍とエクスポートを開始',
+        'library.scan': 'AssetBundle スキャン', 'library.scan_hint': '「スキャン」をクリックしてヒーロー一覧を読み込む',
+        'library.select_all': '全選', 'library.clear': 'クリア',
+        'library.type.original': 'オリジナル', 'library.type.collab': 'コラボ', 'library.type.unknown': '不明',
+        'library.filter.all': 'すべて', 'library.files': 'ファイル', 'library.hero_count': '{0} / {1} 人のヒーローを表示',
+        'library.ready': '準備完了', 'library.incomplete': '不完全', 'library.not_found': 'ヒーローが見つかりません',
+        'library.hero.skeleton': 'スケルトン', 'library.hero.atlas': 'アトラス', 'library.hero.texture': 'テクスチャ',
+        'library.status.success': '完了', 'library.status.failed': '失敗',
+        'run.extract': '解凍', 'run.unpack': '展開', 'run.extract_and_unpack': '解凍 + 展開',
+        'run.gif_only': 'GIF エクスポート', 'run.extract_and_gif': '解凍 + GIF', 'run.full': 'ワンクリック完了',
+        'run.stop': '停止', 'run.log': 'リアルタイムログ', 'run.clear_log': 'クリア', 'run.waiting': '実行待ち...',
+        'run.select_hero': 'ヒーローを選択してください', 'run.started': '開始：', 'run.stopped': '停止リクエスト送信済み...',
+        'settings.title': '設定', 'settings.desc': '外部ツールとエクスポートオプションの設定',
+        'settings.theme': 'テーマ', 'settings.language': '言語',
+        'settings.ab_folder': 'ゲームアセットフォルダ', 'settings.ab_folder_desc': 'AssetBundle ディレクトリ',
+        'settings.tools': '外部ツール', 'settings.as_cli': 'AssetStudio CLI',
+        'settings.spine_cli': 'Spine Pro CLI', 'settings.spine_exporter': 'spine-export-cli（GitHub）',
+        'settings.gif_engine': 'GIF エクスポートエンジン', 'settings.gif_engine_desc': 'spine-exporter は Spine Pro ライセンス不要、.skel + .atlas + .png を直接読み込み',
+        'settings.gif_engine.spine_cli': 'Spine Pro CLI', 'settings.gif_engine.spine_cli_desc': 'Spine Pro 必要',
+        'settings.gif_engine.spine_exporter': 'spine-exporter', 'settings.gif_engine.spine_exporter_desc': '無料オープンソース、3.8.x 対応',
+        'settings.gif_params': 'GIF エクスポート設定（spine-exporter）', 'settings.fps': 'FPS',
+        'settings.scale': 'スケール', 'settings.pma': 'Premultiplied Alpha（PMA）',
+        'settings.spinepro': 'Spine Pro GIF プリセット', 'settings.spinepro_desc': 'ffmpeg を使用して Spine Pro パラメータで GIF パレットを再エンコード。FPS とスケールは上のセクションで設定。',
+        'settings.spinepro.enable': '再エンコード有効', 'settings.spinepro.colors': '色数',
+        'settings.spinepro.color_dither': 'カラーディザ', 'settings.spinepro.quality': '品質',
+        'settings.spinepro.alpha_thresh': 'アルファしきい値', 'settings.spinepro.alpha_dither': 'アルファディザ',
+        'settings.spinepro.loop': 'ループ再生', 'settings.spinepro.restore': 'デフォルトに戻す',
+        'settings.save': '設定を保存', 'settings.saved': '保存済み',
+      },
+      'ko': {
+        'tab.library': '도감', 'tab.run': '실행', 'tab.settings': '설정',
+        'status.idle': '대기', 'status.running': '실행 중', 'status.done': '완료',
+        'library.title': '영웅 도감', 'library.desc': '처리된 영웅 에셋 개요', 'library.refresh': '새로고침',
+        'library.loading': '로딩 중...', 'library.empty': '처리된 영웅 없음', 'library.empty_hint': '"실행" 탭에서 추출 및 내보내기를 시작하세요',
+        'library.scan': 'AssetBundle 스캔', 'library.scan_hint': '"스캔"을 클릭하여 영웅 목록 로드',
+        'library.select_all': '전체 선택', 'library.clear': '지우기',
+        'library.type.original': '오리지널', 'library.type.collab': '콜라보', 'library.type.unknown': '알 수 없음',
+        'library.filter.all': '전체', 'library.files': '파일', 'library.hero_count': '{0} / {1} 영웅 표시',
+        'library.ready': '준비됨', 'library.incomplete': '불완전', 'library.not_found': '영웅을 찾을 수 없음',
+        'library.hero.skeleton': '스켈레톤', 'library.hero.atlas': '아틀라스', 'library.hero.texture': '텍스처',
+        'library.status.success': '완료', 'library.status.failed': '실패',
+        'run.extract': '추출', 'run.unpack': '언팩', 'run.extract_and_unpack': '추출 + 언팩',
+        'run.gif_only': 'GIF 내보내기', 'run.extract_and_gif': '추출 + GIF', 'run.full': '원클릭 완료',
+        'run.stop': '중지', 'run.log': '실시간 로그', 'run.clear_log': '지우기', 'run.waiting': '실행 대기...',
+        'run.select_hero': '영웅을 먼저 선택하세요', 'run.started': '시작됨: ', 'run.stopped': '중지 요청 전송됨...',
+        'settings.title': '설정', 'settings.desc': '외부 도구 및 내보내기 옵션 설정',
+        'settings.theme': '테마', 'settings.language': '언어',
+        'settings.ab_folder': '게임 에셋 폴더', 'settings.ab_folder_desc': 'AssetBundle 디렉토리',
+        'settings.tools': '외부 도구', 'settings.as_cli': 'AssetStudio CLI',
+        'settings.spine_cli': 'Spine Pro CLI', 'settings.spine_exporter': 'spine-export-cli（GitHub）',
+        'settings.gif_engine': 'GIF 내보내기 엔진', 'settings.gif_engine_desc': 'spine-exporter는 Spine Pro 라이선스 불필요, .skel + .atlas + .png 직접 읽기',
+        'settings.gif_engine.spine_cli': 'Spine Pro CLI', 'settings.gif_engine.spine_cli_desc': 'Spine Pro 필요',
+        'settings.gif_engine.spine_exporter': 'spine-exporter', 'settings.gif_engine.spine_exporter_desc': '무료 오픈소스, 3.8.x 지원',
+        'settings.gif_params': 'GIF 내보내기 설정（spine-exporter）', 'settings.fps': 'FPS',
+        'settings.scale': '스케일', 'settings.pma': 'Premultiplied Alpha（PMA）',
+        'settings.spinepro': 'Spine Pro GIF 프리셋', 'settings.spinepro_desc': 'ffmpeg를 사용하여 Spine Pro 매개변수로 GIF 팔레트 재인코딩. FPS와 스케일은 위 섹션에서 설정.',
+        'settings.spinepro.enable': '재인코딩 활성화', 'settings.spinepro.colors': '색상 수',
+        'settings.spinepro.color_dither': '컬러 디더', 'settings.spinepro.quality': '품질',
+        'settings.spinepro.alpha_thresh': '알파 임계값', 'settings.spinepro.alpha_dither': '알파 디더',
+        'settings.spinepro.loop': '루프 재생', 'settings.spinepro.restore': '기본값 복원',
+        'settings.save': '설정 저장', 'settings.saved': '저장됨',
+      },
+      'ru': {
+        'tab.library': 'Библиотека', 'tab.run': 'Запуск', 'tab.settings': 'Настройки',
+        'status.idle': 'Ожидание', 'status.running': 'Выполнение', 'status.done': 'Готово',
+        'library.title': 'Библиотека героев', 'library.desc': 'Обзор обработанных ресурсов героев', 'library.refresh': 'Обновить',
+        'library.loading': 'Загрузка...', 'library.empty': 'Нет обработанных героев', 'library.empty_hint': 'Перейдите на вкладку «Запуск» для извлечения и экспорта',
+        'library.scan': 'Сканировать AssetBundle', 'library.scan_hint': 'Нажмите «Сканировать» для загрузки списка героев',
+        'library.select_all': 'Выбрать все', 'library.clear': 'Очистить',
+        'library.type.original': 'Оригинал', 'library.type.collab': 'Коллаб', 'library.type.unknown': 'Неизвестно',
+        'library.filter.all': 'Все', 'library.files': 'файлов', 'library.hero_count': 'Показано {0} / {1} героев',
+        'library.ready': 'Готово', 'library.incomplete': 'Неполный', 'library.not_found': 'Герои не найдены',
+        'library.hero.skeleton': 'Скелет', 'library.hero.atlas': 'Атлас', 'library.hero.texture': 'Текстура',
+        'library.status.success': 'Готово', 'library.status.failed': 'Ошибка',
+        'run.extract': 'Извлечь', 'run.unpack': 'Распаковать', 'run.extract_and_unpack': 'Извлечь + Распаковать',
+        'run.gif_only': 'Экспорт GIF', 'run.extract_and_gif': 'Извлечь + GIF', 'run.full': 'Полный пайплайн',
+        'run.stop': 'Стоп', 'run.log': 'Журнал', 'run.clear_log': 'Очистить', 'run.waiting': 'Ожидание...',
+        'run.select_hero': 'Сначала выберите героев', 'run.started': 'Запущено: ', 'run.stopped': 'Запрос на остановку отправлен...',
+        'settings.title': 'Настройки', 'settings.desc': 'Настройка инструментов и параметров экспорта',
+        'settings.theme': 'Тема', 'settings.language': 'Язык',
+        'settings.ab_folder': 'Папка с ресурсами', 'settings.ab_folder_desc': 'Каталог AssetBundle',
+        'settings.tools': 'Внешние инструменты', 'settings.as_cli': 'AssetStudio CLI',
+        'settings.spine_cli': 'Spine Pro CLI', 'settings.spine_exporter': 'spine-export-cli（GitHub）',
+        'settings.gif_engine': 'Движок экспорта GIF', 'settings.gif_engine_desc': 'spine-exporter не требует лицензии Spine Pro, напрямую читает .skel + .atlas + .png',
+        'settings.gif_engine.spine_cli': 'Spine Pro CLI', 'settings.gif_engine.spine_cli_desc': 'Требуется Spine Pro',
+        'settings.gif_engine.spine_exporter': 'spine-exporter', 'settings.gif_engine.spine_exporter_desc': 'Бесплатный, 3.8.x',
+        'settings.gif_params': 'Настройки экспорта GIF（spine-exporter）', 'settings.fps': 'FPS',
+        'settings.scale': 'Масштаб', 'settings.pma': 'Premultiplied Alpha（PMA）',
+        'settings.spinepro': 'Пресет Spine Pro GIF', 'settings.spinepro_desc': 'Перекодировка палитры GIF через ffmpeg с параметрами Spine Pro. FPS и масштаб настраиваются выше.',
+        'settings.spinepro.enable': 'Включить перекодировку', 'settings.spinepro.colors': 'Цвета',
+        'settings.spinepro.color_dither': 'Дизеринг цвета', 'settings.spinepro.quality': 'Качество',
+        'settings.spinepro.alpha_thresh': 'Порог альфа', 'settings.spinepro.alpha_dither': 'Дизеринг альфа',
+        'settings.spinepro.loop': 'Зациклить', 'settings.spinepro.restore': 'Сбросить',
+        'settings.save': 'Сохранить', 'settings.saved': 'Сохранено',
+      },
+    };
+
+    let currentLang = localStorage.getItem('dawn-lang') || detectLang();
+
+    function detectLang() {
+      const nav = navigator.language || navigator.userLanguage || 'zh-TW';
+      if (LOCALES[nav]) return nav;
+      const short = nav.split('-')[0];
+      for (const key of Object.keys(LOCALES)) {
+        if (key.startsWith(short)) return key;
+      }
+      return 'zh-TW';
+    }
+
+    function t(key, ...args) {
+      let s = (LOCALES[currentLang] && LOCALES[currentLang][key]) || (LOCALES['zh-TW'] && LOCALES['zh-TW'][key]) || key;
+      args.forEach((v, i) => { s = s.replace(`{${i}}`, v); });
+      return s;
+    }
+
+    function applyLang() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        const translated = t(key);
+        if (el.tagName === 'INPUT' && el.type !== 'checkbox') {
+          el.placeholder = translated;
+        } else {
+          el.textContent = translated;
+        }
+      });
+      document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        el.title = t(el.dataset.i18nTitle);
+      });
+      document.documentElement.lang = currentLang;
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('dawn-lang', lang);
+      applyLang();
+      const sel = document.getElementById('cfg-lang');
+      if (sel) sel.value = lang;
+    }
+
+    let ws = null;
+    let heroes = [];
+    let currentFilter = null;
+
+    async function api(url, methodOrOptions, body) {
+      let options;
+      if (typeof methodOrOptions === 'string') {
+        options = { method: methodOrOptions, headers: {'Content-Type': 'application/json'} };
+        if (body) options.body = JSON.stringify(body);
+      } else {
+        options = methodOrOptions;
+      }
+      const res = await fetch(url, options);
+      const text = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 100)}`);
+      try { return JSON.parse(text); } catch { throw new Error(`非 JSON 回應: ${text.slice(0, 80)}`); }
+    }
+
+    // Tab switching
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('hidden', c.id !== `tab-${name}`));
+      if (name === 'library') loadLibrary();
+      if (name === 'settings') loadConfig();
+    }
+
+    // WebSocket log streaming
+    function connectWS() {
+      ws = new WebSocket(`ws://${location.host}/ws/logs`);
+      ws.onmessage = (e) => {
+        appendLog(e.data);
+      };
+      ws.onclose = () => setTimeout(connectWS, 2000);
+    }
+    connectWS();
+
+    // Status polling
+    setInterval(async () => {
+      try {
+        const data = await api('/api/status');
+        const dot = document.getElementById('status-dot');
+        const txt = document.getElementById('status-text');
+        if (data.running) {
+          dot.className = 'dot dot-running';
+          const modeLabel = {
+            extract_only: t('run.extract'), unpack_only: t('run.unpack'), extract_and_unpack: t('run.extract_and_unpack'),
+            gif_only: t('run.gif_only'), extract_and_gif: t('run.extract_and_gif'), full: t('run.full')
+          };
+          txt.textContent = `${modeLabel[data.mode] || data.mode}（${data.hero_count}）`;
+        } else if (data.finished) {
+          dot.className = 'dot dot-success';
+          txt.textContent = t('status.done');
+        } else {
+          dot.className = 'dot dot-idle';
+          txt.textContent = t('status.idle');
+        }
+      } catch {}
+    }, 2000);
+
+    // Library
+    function renderHeroCards(heroes, typeLabel) {
+      return heroes.map(h => `
+        <div class="card hero-card fade-in cursor-pointer" onclick="openHeroDetail('${h.hero_id}')">
+          ${h.thumbnail
+            ? `<img class="hero-thumb" src="${h.thumbnail}" alt="${h.hero_id}" onerror="this.outerHTML='<div class=\\'hero-thumb-placeholder\\'>${h.hero_number || h.hero_id.replace('hero','')}</div>'">`
+            : `<div class="hero-thumb-placeholder">${h.hero_number || h.hero_id.replace('hero','')}</div>`
+          }
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium truncate">${h.hero_name || h.hero_id}</div>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="badge badge-type">${typeLabel[h.hero_type] || h.hero_type}</span>
+              <span class="text-xs text-[#636366]">${h.gif_count} GIF</span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1.5">
+              <span class="dot dot-${h.status === 'success' ? 'success' : h.status === 'failed' ? 'failed' : 'idle'}"></span>
+              <span class="text-[11px] text-[#636366]">${h.status === 'success' ? t('library.status.success') : h.status === 'failed' ? t('library.status.failed') : h.status}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function loadLibrary() {
+      try {
+        const data = await api('/api/library');
+        const grid = document.getElementById('library-grid');
+        const allHeroes = [...(data.library || []), ...(data.runs || [])];
+        if (!allHeroes.length) {
+          grid.innerHTML = `
+            <div class="col-span-full text-center py-20">
+              <div class="text-[#36363b] mb-3">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </div>
+              <div class="text-sm text-[#636366]">${t('library.empty')}</div>
+              <div class="text-xs text-[#4a4a50] mt-1">${t('library.empty_hint')}</div>
+            </div>`;
+          return;
+        }
+        const typeLabel = {Original: t('library.type.original'), Collab: t('library.type.collab'), Skin: 'Skin', Unknown: t('library.type.unknown')};
+
+        let html = '';
+
+        if (data.library && data.library.length) {
+          html += `<div class="mb-8">`;
+          html += `<div class="flex items-center gap-2 mb-3">`;
+          html += `<h3 class="text-sm font-semibold">📦 圖鑑 Library</h3>`;
+          html += `<span class="text-[11px] text-[#636366]">${data.library.length} 個英雄</span>`;
+          html += `</div>`;
+          html += `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">`;
+          html += renderHeroCards(data.library, typeLabel);
+          html += `</div></div>`;
+        }
+
+        if (data.runs && data.runs.length) {
+          html += `<div>`;
+          html += `<div class="flex items-center gap-2 mb-3">`;
+          html += `<h3 class="text-sm font-semibold">📁 執行記錄 Runs</h3>`;
+          html += `<span class="text-[11px] text-[#636366]">${data.runs.length} 個英雄</span>`;
+          html += `</div>`;
+          html += `<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">`;
+          html += renderHeroCards(data.runs, typeLabel);
+          html += `</div></div>`;
+        }
+
+        grid.innerHTML = html;
+      } catch (e) {
+        document.getElementById('library-grid').innerHTML = `<div class="text-red-400 text-sm col-span-full text-center py-20">${e.message}</div>`;
+      }
+    }
+
+    // Hero Detail
+    let currentDetailHero = null;
+
+    async function openHeroDetail(heroId) {
+      currentDetailHero = heroId;
+      const overlay = document.getElementById('hero-detail-overlay');
+      overlay.classList.remove('hidden');
+
+      document.getElementById('detail-hero-id').textContent = heroId;
+
+      try {
+        const h = await api(`/api/library/${heroId}`);
+
+        const typeLabel = {Original: t('library.type.original'), Collab: t('library.type.collab'), Skin: 'Skin', Unknown: t('library.type.unknown')};
+        document.getElementById('detail-type-badge').textContent = typeLabel[h.hero_type] || h.hero_type;
+        document.getElementById('detail-type-select').value = h.hero_type || 'Unknown';
+        document.getElementById('detail-hero-name').value = h.hero_name || '';
+
+        let bodyHtml = '';
+
+        if (h.thumbnail) {
+          bodyHtml += `<div class="mb-4"><img src="${h.thumbnail}" class="w-32 h-32 object-contain rounded-lg border border-border" style="background:var(--bg-overlay)"></div>`;
+        }
+
+        // Action buttons
+        bodyHtml += `<div class="flex flex-wrap gap-2 mb-5">`;
+        if (h.section === 'runs') {
+          bodyHtml += `<button class="btn btn-primary text-xs" onclick="promoteHero('${heroId}')">📦 移至圖鑑</button>`;
+        } else {
+          bodyHtml += `<span class="badge badge-ready text-xs py-1.5 px-3">已在圖鑑</span>`;
+        }
+        bodyHtml += `<button class="btn btn-secondary text-xs" onclick="cleanHero('${heroId}')">🧹 清理暫存</button>`;
+        bodyHtml += `<button class="btn btn-ghost text-xs" onclick="openFolder('')">📁 開啟資料夾</button>`;
+        bodyHtml += `</div>`;
+
+        const allGifs = [];
+        if (h.gif_files_detail) {
+          h.gif_files_detail.forEach(g => allGifs.push({...g, variant: ''}));
+        }
+        if (h.variant_gifs) {
+          for (const [vid, files] of Object.entries(h.variant_gifs)) {
+            files.forEach(g => allGifs.push({...g, variant: vid}));
+          }
+        }
+
+        if (allGifs.length) {
+          bodyHtml += `<h3 class="text-sm font-medium mb-3">GIF (${allGifs.length})</h3>`;
+          bodyHtml += `<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">`;
+          allGifs.forEach((g, i) => {
+            bodyHtml += `
+              <div class="card p-2 text-center gif-card" data-idx="${i}">
+                <div class="relative w-full h-24 rounded mb-1 overflow-hidden" style="background:var(--bg-overlay)">
+                  <canvas class="gif-static w-full h-full object-contain" data-src="${g.url}" width="200" height="100"></canvas>
+                  <img src="${g.url}" class="gif-anim w-full h-full object-contain absolute inset-0 opacity-0 transition-opacity duration-150">
+                </div>
+                <div class="text-[11px] text-[#636366] truncate">${g.variant ? g.variant + '/' : ''}${g.name}</div>
+                <div class="text-[10px] text-[#4a4a50]">${(g.size/1024).toFixed(0)} KB</div>
+              </div>`;
+          });
+          bodyHtml += `</div>`;
+        } else {
+          bodyHtml += `<div class="text-sm text-[#636366] mb-6">尚無 GIF</div>`;
+        }
+
+        if (h.matched_files && h.matched_files.length) {
+          bodyHtml += `<h3 class="text-sm font-medium mb-2">Matched Files</h3>`;
+          bodyHtml += `<div class="flex flex-wrap gap-1 mb-4">`;
+          h.matched_files.forEach(f => {
+            bodyHtml += `<span class="mono text-[11px] px-2 py-0.5 rounded" style="background:var(--bg-raised);color:var(--text-dim)">${f}</span>`;
+          });
+          bodyHtml += `</div>`;
+        }
+
+        if (h.matched_variants) {
+          for (const [vid, files] of Object.entries(h.matched_variants)) {
+            bodyHtml += `<h3 class="text-sm font-medium mb-2">${vid}/</h3>`;
+            bodyHtml += `<div class="flex flex-wrap gap-1 mb-4">`;
+            files.forEach(f => {
+              bodyHtml += `<span class="mono text-[11px] px-2 py-0.5 rounded" style="background:var(--bg-raised);color:var(--text-dim)">${f}</span>`;
+            });
+            bodyHtml += `</div>`;
+          }
+        }
+
+        document.getElementById('detail-body').innerHTML = bodyHtml;
+
+        // Render static GIF thumbnails via canvas
+        requestAnimationFrame(() => {
+          document.querySelectorAll('.gif-static[data-src]').forEach(canvas => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = () => {
+              canvas.width = canvas.offsetWidth * 2 || 200;
+              canvas.height = canvas.offsetHeight * 2 || 100;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.src = canvas.dataset.src;
+          });
+          // Hover events
+          document.querySelectorAll('.gif-card').forEach(card => {
+            const canvas = card.querySelector('.gif-static');
+            const animImg = card.querySelector('.gif-anim');
+            card.addEventListener('mouseenter', () => {
+              if (canvas) canvas.style.opacity = '0';
+              if (animImg) animImg.style.opacity = '1';
+            });
+            card.addEventListener('mouseleave', () => {
+              if (canvas) canvas.style.opacity = '1';
+              if (animImg) animImg.style.opacity = '0';
+            });
+          });
+        });
+      } catch (e) {
+        document.getElementById('detail-body').innerHTML = `<div class="text-red-400 text-sm">${e.message}</div>`;
+      }
+    }
+
+    function closeHeroDetail() {
+      document.getElementById('hero-detail-overlay').classList.add('hidden');
+      currentDetailHero = null;
+    }
+
+    async function saveHeroMeta() {
+      if (!currentDetailHero) return;
+      const heroName = document.getElementById('detail-hero-name').value;
+      const heroType = document.getElementById('detail-type-select').value;
+      try {
+        await api(`/api/library/${currentDetailHero}`, 'PATCH', {hero_name: heroName, hero_type: heroType});
+        const typeLabel = {Original: t('library.type.original'), Collab: t('library.type.collab'), Skin: 'Skin', Unknown: t('library.type.unknown')};
+        document.getElementById('detail-type-badge').textContent = typeLabel[heroType] || heroType;
+        loadLibrary();
+      } catch (e) {
+        console.error('Failed to save metadata:', e);
+      }
+    }
+
+    async function openFolder(subfolder) {
+      if (!currentDetailHero) return;
+      try {
+        const h = await api(`/api/library/${currentDetailHero}`);
+        let path = '';
+        if (h.section === 'library') {
+          path = `output/heroes/${currentDetailHero}`;
+        } else {
+          const baseUrl = h.thumbnail || '';
+          const match = baseUrl.match(/\/output\/runs\/([^/]+)\/heroes\//);
+          if (match) {
+            path = `output/runs/${match[1]}/heroes/${currentDetailHero}`;
+          }
+        }
+        if (subfolder) path += `/${subfolder}`;
+        if (path) await api('/api/open-folder', 'POST', {path});
+      } catch (e) { alert(e.message); }
+    }
+
+    async function promoteHero(heroId) {
+      try {
+        const r = await api(`/api/library/${heroId}/promote`, 'POST');
+        alert(`已移至 output/heroes/${heroId}/\n${r.promoted.join(', ')}`);
+        loadLibrary();
+      } catch (e) { alert(e.message); }
+    }
+
+    async function cleanHero(heroId) {
+      try {
+        const r = await api(`/api/library/${heroId}/clean`, 'POST');
+        alert(`已清理 ${r.removed.length} 個暫存目錄`);
+        openHeroDetail(heroId);
+      } catch (e) { alert(e.message); }
+    }
+
+    async function cleanAllTemp() {
+      if (!confirm('確定要清理所有執行記錄的暫存檔案？（raw_export、diagnostics）')) return;
+      try {
+        const r = await api('/api/clean-temp', 'POST');
+        alert(`已清理 ${r.cleaned_runs.length} 個執行記錄的暫存`);
+      } catch (e) { alert(e.message); }
+    }
+
+    // Hero scanning
+    async function scanHeroes() {
+      try {
+        heroes = await api('/api/heroes');
+        renderHeroList();
+      } catch (e) {
+        document.getElementById('hero-list').innerHTML = `<div class="text-red-400 text-sm text-center py-12">${e.message}</div>`;
+      }
+    }
+
+    function renderHeroList() {
+      const list = document.getElementById('hero-list');
+      const filtered = currentFilter ? heroes.filter(h => h.hero_type === currentFilter) : heroes;
+
+      if (!heroes.length) {
+        list.innerHTML = '<div class="text-[#636366] text-sm text-center py-12">' + t('library.not_found') + '</div>';
+        document.getElementById('hero-count').textContent = '';
+        return;
+      }
+
+      const typeLabel = {Original: t('library.type.original'), Collab: t('library.type.collab'), Skin: 'Skin'};
+      list.innerHTML = filtered.map(h => `
+        <label class="hero-card cursor-pointer">
+          <input type="checkbox" class="hero-cb" value="${h.hero_id}">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm mono font-medium">${h.hero_id}</div>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span class="badge badge-type">${typeLabel[h.hero_type] || h.hero_type}</span>
+              <span class="text-[11px] text-[#636366]">${h.file_count} ${t('library.files')}</span>
+            </div>
+          </div>
+          <span class="badge ${h.status === 'Ready' ? 'badge-ready' : 'badge-partial'}">${h.status === 'Ready' ? t('library.ready') : t('library.incomplete')}</span>
+        </label>
+      `).join('');
+
+      const selected = filtered.length;
+      document.getElementById('hero-count').textContent = t('library.hero_count', selected, heroes.length);
+    }
+
+    function filterType(type) {
+      currentFilter = type;
+      renderHeroList();
+    }
+
+    function selectAll(state) {
+      document.querySelectorAll('.hero-cb').forEach(cb => cb.checked = state);
+    }
+
+    function getSelectedHeroes() {
+      return [...document.querySelectorAll('.hero-cb:checked')].map(cb => cb.value);
+    }
+
+    // Run
+    async function runMode(mode) {
+      const selected = getSelectedHeroes();
+      if (!selected.length) { alert(t('run.select_hero')); return; }
+      try {
+        const data = await api('/api/run', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({mode, hero_ids: selected})
+        });
+        document.getElementById('log-panel').innerHTML = '';
+        const modeLabel = {
+          extract_only: t('run.extract'), unpack_only: t('run.unpack'), extract_and_unpack: t('run.extract_and_unpack'),
+          gif_only: t('run.gif_only'), extract_and_gif: t('run.extract_and_gif'), full: t('run.full')
+        };
+        appendLog(`${t('run.started')}${modeLabel[mode] || mode}（${data.hero_count}）`);
+      } catch (e) { alert(e.message); }
+    }
+
+    async function stopRun() {
+      await fetch('/api/stop', {method: 'POST'});
+      appendLog(t('run.stopped'));
+    }
+
+    function appendLog(text) {
+      const panel = document.getElementById('log-panel');
+      const line = document.createElement('div');
+      let cls = 'log-line log-line-info';
+      if (text.includes('ERROR') || text.includes('error') || text.includes('失敗') || text.includes('Failed') || text.includes('failed')) cls = 'log-line log-line-error';
+      else if (text.includes('WARNING') || text.includes('warn')) cls = 'log-line log-line-warn';
+      else if (text.includes('success') || text.includes('完成') || text.includes('GIF') || text.includes('Done')) cls = 'log-line log-line-success';
+      line.className = cls + ' fade-in';
+      line.textContent = text;
+      panel.appendChild(line);
+      panel.scrollTop = panel.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('log-panel').innerHTML = '';
+    }
+
+    // Config
+    const SPINE_PRO_DEFAULTS = {
+      colors: 238, colorDither: 50, quality: 8,
+      alphaThresh: 8, alphaDither: 40, loop: true
+    };
+
+    function restoreSpineProDefaults() {
+      const d = SPINE_PRO_DEFAULTS;
+      document.getElementById('cfg-sp-colors').value = d.colors;
+      document.getElementById('cfg-sp-color-dither').value = d.colorDither;
+      document.getElementById('cfg-sp-quality').value = d.quality;
+      document.getElementById('cfg-sp-alpha-thresh').value = d.alphaThresh;
+      document.getElementById('cfg-sp-alpha-dither').value = d.alphaDither;
+      document.getElementById('cfg-sp-loop').checked = d.loop;
+    }
+
+    async function loadConfig() {
+      try {
+        const cfg = await api('/api/config');
+        document.getElementById('cfg-ab-folder').value = cfg.asset_bundle_folder || '';
+        document.getElementById('cfg-as-path').value = cfg.assetstudio_path || '';
+        document.getElementById('cfg-spine-path').value = cfg.spine_cli_path || '';
+        document.getElementById('cfg-exporter-path').value = cfg.spine_exporter_path || '';
+        const engine = cfg.gif_engine || 'spine_cli';
+        document.querySelector(`input[name="gif-engine"][value="${engine}"]`).checked = true;
+        document.getElementById('cfg-fps').value = cfg.gif_export_fps || 30;
+        document.getElementById('cfg-scale').value = cfg.gif_export_scale || 1.0;
+        document.getElementById('cfg-pma').checked = cfg.gif_export_pma || false;
+        document.getElementById('cfg-spinepro-reencode').checked = cfg.gif_spinepro_reencode_enabled || false;
+        const sp = cfg.gif_spinepro_preset || {};
+        document.getElementById('cfg-sp-colors').value = sp.colors ?? 238;
+        document.getElementById('cfg-sp-color-dither').value = sp.colorDither ?? 50;
+        document.getElementById('cfg-sp-quality').value = sp.quality ?? 8;
+        document.getElementById('cfg-sp-alpha-thresh').value = sp.alphaThresh ?? 8;
+        document.getElementById('cfg-sp-alpha-dither').value = sp.alphaDither ?? 40;
+        document.getElementById('cfg-sp-loop').checked = sp.loop ?? true;
+      } catch {}
+    }
+
+    async function saveConfig() {
+      const cfg = {
+        asset_bundle_folder: document.getElementById('cfg-ab-folder').value,
+        assetstudio_path: document.getElementById('cfg-as-path').value,
+        spine_cli_path: document.getElementById('cfg-spine-path').value,
+        spine_exporter_path: document.getElementById('cfg-exporter-path').value,
+        gif_engine: document.querySelector('input[name="gif-engine"]:checked').value,
+        gif_export_fps: parseInt(document.getElementById('cfg-fps').value) || 30,
+        gif_export_scale: parseFloat(document.getElementById('cfg-scale').value) || 1.0,
+        gif_export_pma: document.getElementById('cfg-pma').checked,
+        gif_spinepro_reencode_enabled: document.getElementById('cfg-spinepro-reencode').checked,
+        gif_spinepro_preset: {
+          colors: parseInt(document.getElementById('cfg-sp-colors').value) || 238,
+          colorDither: parseInt(document.getElementById('cfg-sp-color-dither').value) || 50,
+          quality: parseInt(document.getElementById('cfg-sp-quality').value) || 8,
+          alphaThresh: parseInt(document.getElementById('cfg-sp-alpha-thresh').value) || 8,
+          alphaDither: parseInt(document.getElementById('cfg-sp-alpha-dither').value) || 40,
+          loop: document.getElementById('cfg-sp-loop').checked,
+        },
+      };
+      try {
+        await api('/api/config', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(cfg)
+        });
+        const el = document.getElementById('cfg-status');
+        el.textContent = t('settings.saved');
+        setTimeout(() => el.textContent = '', 2500);
+      } catch (e) { alert(e.message); }
+    }
+
+    // Init
+    loadLibrary();
+    applyLang();
+    const langSel = document.getElementById('cfg-lang');
+    if (langSel) langSel.value = currentLang;
+  </script>
+</body>
+</html>

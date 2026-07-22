@@ -1,0 +1,28 @@
+﻿# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Output (generated at runtime)
+output/
+
+# VS Code
+.vscode/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Node (for spine-exporter)
+node_modules/
+
+# External tools (user places locally)
+tools/spine/
+tools/spine-exporter/
+
+# Config overrides (user-specific)
+config/appsettings.json
+config/appsettings.local.json
+config/hero_metadata.json
