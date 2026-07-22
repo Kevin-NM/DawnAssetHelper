@@ -2,6 +2,8 @@
 
 DawnAssetHelper 是一個用於協助解包 Unity AssetBundle 遊戲資源的 Windows 桌面 GUI 工具，主要針對 Hero 資源（Spine 相關檔案）進行快速解包與分類。
 
+![screenshot](https://github.com/Kevin-NM/DawnAssetHelper/releases/download/v1.0.0/2026-07-22.225849.png)
+
 ## 專案用途
 
 1. 掃描指定目錄下的 `.ab` 檔案，自動根據命名規則辨識 Hero ID 與分類 (Original, Collab, Skin)。
