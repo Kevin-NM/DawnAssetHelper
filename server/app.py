@@ -90,6 +90,9 @@ async def log_broadcaster():
 @app.on_event("startup")
 async def startup():
     asyncio.create_task(log_broadcaster())
+    temp_preview_root = Path("./output/temp/texture_preview")
+    temp_preview_root.mkdir(parents=True, exist_ok=True)
+    app.mount("/output/temp/texture_preview", StaticFiles(directory=temp_preview_root), name="texture_preview")
 
 
 class RunRequest(BaseModel):
@@ -684,6 +687,284 @@ async def api_delete_run(run_id: str):
     shutil.rmtree(run_dir)
     return {"status": "ok", "deleted": run_id}
 
+
+# ============================================================
+# Resource Index (本地表) Routes
+# ============================================================
+
+class ResourceIndexRequest(BaseModel):
+    folder: str = ""
+
+class ResourceCompareRequest(BaseModel):
+    old_folder: str = ""
+    new_folder: str = ""
+
+@app.post("/api/resource-index/build")
+async def api_build_resource_index(req: ResourceIndexRequest):
+    from src.services.resource_indexer import build_index
+    config = get_config()
+    folder = req.folder or config.asset_bundle_folder
+    if not folder or not Path(folder).exists():
+        raise HTTPException(400, "Folder not set or does not exist")
+    idx = build_index(folder, config.output_root)
+    return {
+        "status": "ok",
+        "folder": idx.folder,
+        "created_at": idx.created_at,
+        "file_count": idx.file_count,
+        "total_size": idx.total_size,
+        "summary": {
+            "hero": sum(1 for e in idx.entries if e.file_type == "hero"),
+            "activity_spine": sum(1 for e in idx.entries if e.file_type == "activity_spine"),
+            "activity_pack": sum(1 for e in idx.entries if e.file_type == "activity_pack"),
+            "other": sum(1 for e in idx.entries if e.file_type == "other"),
+        },
+    }
+
+@app.get("/api/resource-index")
+async def api_list_indexes():
+    from src.services.resource_indexer import list_indexes
+    config = get_config()
+    return list_indexes(config.output_root)
+
+@app.get("/api/resource-index/latest")
+async def api_latest_index():
+    from src.services.resource_indexer import load_latest_index
+    config = get_config()
+    idx = load_latest_index(config.output_root)
+    if not idx:
+        raise HTTPException(404, "No index found")
+    return {
+        "folder": idx.folder,
+        "created_at": idx.created_at,
+        "file_count": idx.file_count,
+        "total_size": idx.total_size,
+        "entries": [
+            {"filename": e.filename, "size": e.size, "sha256": e.sha256, "file_type": e.file_type}
+            for e in idx.entries
+        ],
+    }
+
+@app.post("/api/resource-index/compare")
+async def api_compare_indexes(req: ResourceCompareRequest):
+    from src.services.resource_indexer import build_index, load_latest_index, diff_indexes
+    config = get_config()
+    old_folder = req.old_folder or config.asset_bundle_folder
+    new_folder = req.new_folder or config.asset_bundle_folder
+    if not old_folder or not Path(old_folder).exists():
+        raise HTTPException(400, "Old folder not valid")
+    if not new_folder or not Path(new_folder).exists():
+        raise HTTPException(400, "New folder not valid")
+
+    old_idx = load_latest_index(config.output_root)
+    if not old_idx:
+        old_idx = build_index(old_folder, config.output_root)
+    new_idx = build_index(new_folder, config.output_root)
+
+    diff = diff_indexes(old_idx, new_idx)
+    diff["old_index"] = {"folder": old_idx.folder, "created_at": old_idx.created_at}
+    diff["new_index"] = {"folder": new_idx.folder, "created_at": new_idx.created_at}
+    return diff
+
+# ============================================================
+# Activity Routes
+# ============================================================
+
+class ActivityExtractRequest(BaseModel):
+    activity_id: str = ""
+    mode: str = "extract_and_gif"
+
+@app.get("/api/activities")
+async def api_list_activities():
+    from src.services.activity_scanner import detect_activity_packs
+    config = get_config()
+    folder = config.asset_bundle_folder
+    if not folder or not Path(folder).exists():
+        raise HTTPException(400, "asset_bundle_folder not set or does not exist")
+
+    activities = detect_activity_packs(folder)
+    return [
+        {
+            "activity_id": a.activity_id,
+            "activity_name": a.activity_name,
+            "pack_file": a.pack_file,
+            "pack_size": a.pack_size,
+            "hero_count": len(a.hero_ids),
+            "hero_ids": a.hero_ids,
+            "spine_file_count": len(a.spine_files),
+        }
+        for a in activities
+    ]
+
+@app.get("/api/activities/{activity_id}")
+async def api_activity_detail(activity_id: str):
+    from src.services.activity_scanner import detect_activities, find_hero_ab_files
+    config = get_config()
+    folder = config.asset_bundle_folder
+    if not folder or not Path(folder).exists():
+        raise HTTPException(400, "asset_bundle_folder not set or does not exist")
+
+    activities = detect_activities(folder, config.assetstudio_path, config, config.output_root)
+    activity = next((a for a in activities if a.activity_id == activity_id), None)
+    if not activity:
+        raise HTTPException(404, f"Activity {activity_id} not found")
+
+    hero_abs = find_hero_ab_files(folder, activity.hero_ids)
+
+    return {
+        "activity_id": activity.activity_id,
+        "activity_name": activity.activity_name,
+        "pack_file": activity.pack_file,
+        "pack_size": activity.pack_size,
+        "hero_ids": activity.hero_ids,
+        "hero_ab_files": hero_abs,
+        "spine_files": activity.spine_files,
+        "total_heroes_with_ab": len(hero_abs),
+    }
+
+@app.get("/api/activities/{activity_id}/plan")
+async def api_activity_plan(activity_id: str):
+    from src.services.activity_extractor import build_activity_extract_plan
+    config = get_config()
+    folder = config.asset_bundle_folder
+    if not folder or not Path(folder).exists():
+        raise HTTPException(400, "asset_bundle_folder not set or does not exist")
+
+    plans = build_activity_extract_plan(folder, config.assetstudio_path, config, config.output_root)
+    plan = next((p for p in plans if p.activity_id == activity_id), None)
+    if not plan:
+        raise HTTPException(404, f"Activity {activity_id} not found")
+
+    return {
+        "activity_id": plan.activity_id,
+        "activity_name": plan.activity_name,
+        "pack_file": plan.pack_file,
+        "total_heroes": plan.total_heroes,
+        "total_files": plan.total_files,
+        "hero_ab_files": plan.hero_ab_files,
+        "activity_spine_files": plan.activity_spine_files,
+    }
+
+@app.post("/api/activities/{activity_id}/extract")
+async def api_activity_extract(activity_id: str, req: ActivityExtractRequest):
+    global active_worker
+    if active_worker and active_worker.isRunning():
+        raise HTTPException(409, "A job is already running")
+
+    from src.services.activity_scanner import detect_activities, find_hero_ab_files
+    from src.services.hero_scanner import HeroScanner, parse_hero_number, classify_hero_type
+    from src.models import HeroBundleGroup
+
+    config = get_config()
+    folder = config.asset_bundle_folder
+    if not folder or not Path(folder).exists():
+        raise HTTPException(400, "asset_bundle_folder not set or does not exist")
+
+    activities = detect_activities(folder, config.assetstudio_path, config, config.output_root)
+    activity = next((a for a in activities if a.activity_id == activity_id), None)
+    if not activity:
+        raise HTTPException(404, f"Activity {activity_id} not found")
+
+    hero_abs = find_hero_ab_files(folder, activity.hero_ids)
+
+    scanner = HeroScanner(folder)
+    all_heroes = scanner.scan()
+    all_hero_map = {h.hero_id: h for h in all_heroes}
+
+    heroes = []
+    for hero_id in hero_abs:
+        if hero_id in all_hero_map:
+            heroes.append(all_hero_map[hero_id])
+        else:
+            ab_files = [Path(folder) / f for f in hero_abs[hero_id]]
+            group = HeroBundleGroup(
+                hero_id=hero_id,
+                hero_number=parse_hero_number(hero_id),
+                hero_type=classify_hero_type(hero_id),
+                variant_ids=[],
+                bundle_files=ab_files,
+                file_count=len(ab_files),
+                total_size=sum(f.stat().st_size for f in ab_files),
+                status="Ready" if len(ab_files) >= 2 else "Partial",
+            )
+            heroes.append(group)
+
+    mode = req.mode or "extract_and_gif"
+
+    active_worker = OrchestratorWorker(config, heroes, mode)
+
+    worker_status["running"] = True
+    worker_status["mode"] = f"activity:{activity_id}:{mode}"
+    worker_status["hero_count"] = len(heroes)
+    worker_status["finished"] = False
+
+    global _log_connected
+    if not _log_connected:
+        logger.log_signal.connect(_on_log)
+        _log_connected = True
+
+    def on_finished(summary):
+        global active_worker
+        worker_status["running"] = False
+        worker_status["finished"] = True
+        log_queue.put(f"--- 活動 {activity_id} 任務完成 ---")
+        active_worker = None
+
+    active_worker.finished.connect(on_finished)
+    active_worker.start()
+
+    log_queue.put(f"已啟動活動 {activity_id}：{mode}（{len(heroes)} 個英雄）")
+    return {
+        "status": "started",
+        "activity_id": activity_id,
+        "mode": mode,
+        "hero_count": len(heroes),
+        "hero_ids": [h.hero_id for h in heroes],
+    }
+
+@app.post("/api/activities/{activity_id}/preview")
+async def api_activity_texture_preview(activity_id: str):
+    from src.services.activity_extractor import extract_texture_previews
+    config = get_config()
+    folder = config.asset_bundle_folder
+    if not folder or not Path(folder).exists():
+        raise HTTPException(400, "asset_bundle_folder not set or does not exist")
+
+    result = extract_texture_previews(
+        folder, activity_id, config.assetstudio_path, config, config.output_root
+    )
+
+    if "error" in result:
+        raise HTTPException(500, result["error"])
+
+    return result
+
+@app.get("/api/texture-preview/{activity_id}")
+async def api_texture_preview_list(activity_id: str):
+    config = get_config()
+    preview_dir = Path(config.output_root) / "temp" / "texture_preview" / activity_id
+    if not preview_dir.exists():
+        return {"activity_id": activity_id, "image_count": 0, "images": []}
+
+    import os
+    images = []
+    for root, dirs, files in os.walk(preview_dir):
+        for f in files:
+            if f.lower().endswith((".png", ".jpg", ".jpeg", ".webp", ".tga")):
+                full_path = os.path.join(root, f)
+                rel_path = os.path.relpath(full_path, preview_dir)
+                images.append({
+                    "filename": f,
+                    "path": rel_path,
+                    "url": f"/output/temp/texture_preview/{activity_id}/{rel_path.replace(os.sep, '/')}",
+                    "size": os.path.getsize(full_path),
+                })
+
+    return {
+        "activity_id": activity_id,
+        "image_count": len(images),
+        "images": images,
+    }
 
 if __name__ == "__main__":
     import uvicorn
