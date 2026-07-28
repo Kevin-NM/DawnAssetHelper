@@ -988,6 +988,16 @@ async def api_activity_process_selected(activity_id: str, req: ActivityProcessRe
     result = process_activity_selected(activity_id, req.selected_stems, config, config.output_root)
     return result
 
+@app.post("/api/activities/{activity_id}/clean-pack")
+async def api_clean_activity_pack(activity_id: str):
+    import shutil
+    config = get_config()
+    pack_dir = Path(config.output_root) / "temp" / "activity_extract" / "activity_pack_extract"
+    if pack_dir.exists():
+        shutil.rmtree(pack_dir)
+        return {"status": "ok", "cleaned": str(pack_dir)}
+    return {"status": "ok", "cleaned": None}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000, ws="websockets")

@@ -1271,6 +1271,7 @@
         'activities.process_done': '完成：已處理 {0} 個項目，錯誤 {1}',
         'activities.export_started': '啟動活動 {0} 自動匯出...',
         'activities.export_launched': '活動 {0}：已啟動 {1} 個英雄',
+        'activities.clean_pack': '清理',
       },
       'zh-CN': {
         'tab.library': '图鉴', 'tab.run': '执行', 'tab.settings': '设置',
@@ -1339,6 +1340,7 @@
         'activities.process_done': '完成：已处理 {0} 个项目，错误 {1}',
         'activities.export_started': '启动活动 {0} 自动导出...',
         'activities.export_launched': '活动 {0}：已启动 {1} 个英雄',
+        'activities.clean_pack': '清理',
       },
       'en': {
         'tab.library': 'Library', 'tab.run': 'Run', 'tab.settings': 'Settings',
@@ -1407,6 +1409,7 @@
         'activities.process_done': 'Done: {0} processed, {1} errors',
         'activities.export_started': 'Starting activity {0} auto export...',
         'activities.export_launched': 'Activity {0}: launched {1} heroes',
+        'activities.clean_pack': 'Clean',
       },
       'ja': {
         'tab.library': '図鑑', 'tab.run': '実行', 'tab.settings': '設定',
@@ -1475,6 +1478,7 @@
         'activities.process_done': '完了: {0} 処理, {1} エラー',
         'activities.export_started': 'アクティビティ {0} 自動エクスポート開始...',
         'activities.export_launched': 'アクティビティ {0}: {1} ヒーロー起動',
+        'activities.clean_pack': '削除',
       },
       'ko': {
         'tab.library': '도감', 'tab.run': '실행', 'tab.settings': '설정',
@@ -1543,6 +1547,7 @@
         'activities.process_done': '완료: {0} 처리, {1} 오류',
         'activities.export_started': '액티비티 {0} 자동 내보내기 시작...',
         'activities.export_launched': '액티비티 {0}: {1} 영웅 시작',
+        'activities.clean_pack': '삭제',
       },
       'ru': {
         'tab.library': 'Библиотека', 'tab.run': 'Запуск', 'tab.settings': 'Настройки',
@@ -1611,6 +1616,7 @@
         'activities.process_done': 'Готово: {0} обработано, {1} ошибок',
         'activities.export_started': 'Запуск автоэкспорта активности {0}...',
         'activities.export_launched': 'Активность {0}: запущено {1} героев',
+        'activities.clean_pack': 'Очистить',
       },
     };
 
@@ -2244,6 +2250,7 @@ function switchTab(name) {
               <button class="btn btn-secondary text-xs" onclick="loadActivityPackBrowser('${a.activity_id}')">${t('activities.browse_pack')}</button>
               <button class="btn btn-secondary text-xs" onclick="loadTexturePreview('${a.activity_id}')">${t('activities.texture_preview')}</button>
               <button class="btn btn-primary text-xs" onclick="extractActivity('${a.activity_id}')">${t('activities.auto_export')}</button>
+              <button class="btn btn-ghost text-[10px] px-1.5 py-0.5 text-[#e5484d]" onclick="cleanActivityPack('${a.activity_id}')">${t('activities.clean_pack')}</button>
             </div>
           </div>
           <div class="flex flex-wrap gap-1" id="act-heroes-${a.activity_id}">
@@ -2323,20 +2330,21 @@ function switchTab(name) {
         previewEl.classList.add('hidden');
         return;
       }
-      previewEl.innerHTML = '<div class="text-[11px] text-[#636366]">解包圖片中，請稍候...</div>';
       previewEl.classList.remove('hidden');
+
       try {
-        const result = await api(`/api/activities/${activityId}/preview`, 'POST', {});
-        textureImages = result.images || [];
+        const data = await api(`/api/activities/${activityId}/pack-files`);
+        const items = data.items || [];
         let html = `<div class="border-t border-border pt-3 mt-2">`;
-        html += `<div class="text-xs font-medium mb-2">${t('activities.texture_preview_label', result.image_count)}</div>`;
-        if (textureImages.length) {
-          html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-96 overflow-y-auto">`;
-          textureImages.forEach(img => {
-            const url = `/output/temp/texture_preview/${activityId}/${img.path.replace(/\\\\/g, '/')}`;
+        html += `<div class="text-xs font-medium mb-2">${t('activities.texture_preview_label', items.length)}</div>`;
+        if (items.length) {
+          html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-96 overflow-y-auto">`;
+          items.forEach(item => {
+            const url = `/output/temp/activity_extract/activity_pack_extract/Texture2D/${item.stem}.png`;
             html += `<div class="card p-1 text-center" style="background:var(--bg-overlay)">
-              <img src="${url}" class="w-full h-16 object-contain rounded" loading="lazy" onerror="this.parentElement.style.display='none'">
-              <div class="text-[9px] text-[#636366] truncate mt-0.5" title="${img.filename}">${img.filename}</div>
+              <img src="${url}" class="w-full h-16 object-contain rounded" loading="lazy" onerror="this.parentElement.querySelector('.err-msg').style.display='block';this.style.display='none'">
+              <span class="err-msg text-[9px] text-[#e5484d] hidden">${t('activities.no_image')}</span>
+              <div class="text-[9px] text-[#636366] truncate mt-0.5" title="${item.stem}">${item.stem.substring(0, 20)}</div>
             </div>`;
           });
           html += `</div>`;
@@ -2346,7 +2354,7 @@ function switchTab(name) {
         html += `</div>`;
         previewEl.innerHTML = html;
       } catch (e) {
-        previewEl.innerHTML = `<div class="text-red-400 text-xs">${e.message}</div>`;
+        previewEl.innerHTML = `<div class="text-red-400 text-xs">${e.message}<br><span class="text-[#636366]">${t('activities.pack_not_extracted')}</span></div>`;
       }
     }
 
@@ -2375,6 +2383,16 @@ function switchTab(name) {
       } catch (e) {
         alert(e.message);
       }
+    }
+
+    async function cleanActivityPack(activityId) {
+      if (!confirm('確定要刪除活動包解包暫存？（將清除 output/temp/activity_extract/activity_pack_extract/）')) return;
+      try {
+        await api(`/api/activities/${activityId}/clean-pack`, 'POST', {});
+        activityHeroesCache = {};
+        activitiesData = [];
+        loadActivities();
+      } catch (e) { alert(e.message); }
     }
 
     // Activity Pack Browser
