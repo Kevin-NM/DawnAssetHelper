@@ -231,12 +231,13 @@ def process_activity_selected(
 
         if skel_src.exists():
             dest = matched_dir / f"{hero_id}.skel"
-            raw = skel_src.read_bytes()
-
             from src.services.asset_matcher import strip_unity_skel_header
-            stripped = strip_unity_skel_header(raw)
-            dest.write_bytes(stripped)
-            logger.info(f"[Activity] {stem}: copied skeleton ({len(stripped)} bytes)")
+            stripped_ok = strip_unity_skel_header(skel_src, dest)
+            if not stripped_ok:
+                shutil.copy2(skel_src, dest)
+                logger.info(f"[Activity] {stem}: copied skeleton as-is (no Unity header detected)")
+            else:
+                logger.info(f"[Activity] {stem}: stripped Unity header from skeleton")
         else:
             logger.warning(f"[Activity] {stem}: no skeleton file")
 
