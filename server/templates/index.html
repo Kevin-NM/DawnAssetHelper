@@ -1272,6 +1272,8 @@
         'activities.export_started': '啟動活動 {0} 自動匯出...',
         'activities.export_launched': '活動 {0}：已啟動 {1} 個英雄',
         'activities.clean_pack': '清理',
+        'activities.extract_pack': '解包活動包',
+        'activities.extract_pack_confirm': '確定要解包活動 {0} 的活動包？\n（約需 1-2 分鐘，解包後可瀏覽圖片與匯出）',
       },
       'zh-CN': {
         'tab.library': '图鉴', 'tab.run': '执行', 'tab.settings': '设置',
@@ -1341,6 +1343,8 @@
         'activities.export_started': '启动活动 {0} 自动导出...',
         'activities.export_launched': '活动 {0}：已启动 {1} 个英雄',
         'activities.clean_pack': '清理',
+        'activities.extract_pack': '解包活动包',
+        'activities.extract_pack_confirm': '确定要解包活动 {0} 的活动包？\n（约需 1-2 分钟，解包后可浏览图片与导出）',
       },
       'en': {
         'tab.library': 'Library', 'tab.run': 'Run', 'tab.settings': 'Settings',
@@ -1410,6 +1414,8 @@
         'activities.export_started': 'Starting activity {0} auto export...',
         'activities.export_launched': 'Activity {0}: launched {1} heroes',
         'activities.clean_pack': 'Clean',
+        'activities.extract_pack': 'Extract Pack',
+        'activities.extract_pack_confirm': 'Extract activity pack for {0}?\n(~1-2 min, then browse images and export)',
       },
       'ja': {
         'tab.library': '図鑑', 'tab.run': '実行', 'tab.settings': '設定',
@@ -1479,6 +1485,8 @@
         'activities.export_started': 'アクティビティ {0} 自動エクスポート開始...',
         'activities.export_launched': 'アクティビティ {0}: {1} ヒーロー起動',
         'activities.clean_pack': '削除',
+        'activities.extract_pack': 'パック解凍',
+        'activities.extract_pack_confirm': 'アクティビティ {0} のパックを解凍しますか？\n（約1-2分、解凍後は画像閲覧とエクスポートが可能）',
       },
       'ko': {
         'tab.library': '도감', 'tab.run': '실행', 'tab.settings': '설정',
@@ -1548,6 +1556,8 @@
         'activities.export_started': '액티비티 {0} 자동 내보내기 시작...',
         'activities.export_launched': '액티비티 {0}: {1} 영웅 시작',
         'activities.clean_pack': '삭제',
+        'activities.extract_pack': '팩 추출',
+        'activities.extract_pack_confirm': '액티비티 {0} 팩을 추출하시겠습니까?\n(약 1-2분, 추출 후 이미지 탐색 및 내보내기 가능)',
       },
       'ru': {
         'tab.library': 'Библиотека', 'tab.run': 'Запуск', 'tab.settings': 'Настройки',
@@ -1617,6 +1627,8 @@
         'activities.export_started': 'Запуск автоэкспорта активности {0}...',
         'activities.export_launched': 'Активность {0}: запущено {1} героев',
         'activities.clean_pack': 'Очистить',
+        'activities.extract_pack': 'Извлечь пакет',
+        'activities.extract_pack_confirm': 'Извлечь пакет активности {0}?\n(~1-2 мин, затем просмотр и экспорт)',
       },
     };
 
@@ -2170,6 +2182,8 @@ function switchTab(name) {
     let activityHeroesCache = {};
     let packBrowserData = {};
     let selectedPackItems = new Set();
+    let packZoom = 4; // 0=2rem, 1=3rem, 2=4rem, 3=6rem, 4=8rem, 5=12rem, 6=16rem
+    const ZOOM_SIZES = ['h-8', 'h-12', 'h-16', 'h-24', 'h-32', 'h-48', 'h-64'];
 
     // Init
     loadLibrary();
@@ -2246,9 +2260,9 @@ function switchTab(name) {
               <div class="text-[11px] text-[#636366] mt-1">${a.pack_file} (${sizeMB} MB) · ${a.spine_file_count} spine 檔案</div>
             </div>
             <div class="flex gap-2">
+              <button class="btn btn-primary text-xs" onclick="extractActivityPack('${a.activity_id}')">${t('activities.extract_pack')}</button>
               <button class="btn btn-secondary text-xs" onclick="loadActivityDetail('${a.activity_id}', ${idx})">${t('activities.ab_map')}</button>
               <button class="btn btn-secondary text-xs" onclick="loadActivityPackBrowser('${a.activity_id}')">${t('activities.browse_pack')}</button>
-              <button class="btn btn-secondary text-xs" onclick="loadTexturePreview('${a.activity_id}')">${t('activities.texture_preview')}</button>
               <button class="btn btn-primary text-xs" onclick="extractActivity('${a.activity_id}')">${t('activities.auto_export')}</button>
               <button class="btn btn-ghost text-[10px] px-1.5 py-0.5 text-[#e5484d]" onclick="cleanActivityPack('${a.activity_id}')">${t('activities.clean_pack')}</button>
             </div>
@@ -2395,6 +2409,21 @@ function switchTab(name) {
       } catch (e) { alert(e.message); }
     }
 
+    async function extractActivityPack(activityId) {
+      if (!confirm(t('activities.extract_pack_confirm', activityId))) return;
+      try {
+        appendLog(`開始解包活動 ${activityId}...`);
+        await api(`/api/activities/${activityId}`, 'GET');
+        appendLog(`活動 ${activityId} 解包完成`);
+        activityHeroesCache = {};
+        activitiesData = [];
+        loadActivities();
+        setTimeout(() => loadActivityPackBrowser(activityId), 500);
+      } catch (e) {
+        alert('解包失敗: ' + e.message);
+      }
+    }
+
     // Activity Pack Browser
     async function loadActivityPackBrowser(activityId) {
       const browserEl = document.getElementById(`act-browser-${activityId}`);
@@ -2415,26 +2444,30 @@ function switchTab(name) {
       }
     }
 
-    function renderPackBrowser(activityId, data) {
+function renderPackBrowser(activityId, data) {
       const browserEl = document.getElementById(`act-browser-${activityId}`);
+      const sizeClass = ZOOM_SIZES[packZoom] || 'h-16';
       let html = `<div class="border-t border-border pt-3 mt-2">`;
-      html += `<div class="flex items-center justify-between mb-2">`;
+      html += `<div class="flex items-center justify-between mb-2 flex-wrap gap-2">`;
       html += `<div class="text-xs font-medium">${t('activities.pack_content')} (${t('activities.complete_count', data.complete_items, data.total_textures)})</div>`;
-      html += `<div class="flex gap-2">`;
+      html += `<div class="flex items-center gap-2">`;
+      html += `<button class="btn btn-ghost text-[10px] px-1.5 py-0.5" onclick="changeZoom(-1);renderPackBrowser('${activityId}', packBrowserData['${activityId}'])" title="縮小">−</button>`;
+      html += `<span class="text-[10px] text-[#636366] mono">${Math.round(100 * Math.pow(1.5, packZoom))}%</span>`;
+      html += `<button class="btn btn-ghost text-[10px] px-1.5 py-0.5" onclick="changeZoom(1);renderPackBrowser('${activityId}', packBrowserData['${activityId}'])" title="放大">+</button>`;
       html += `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="selectAllPackItems('${activityId}', true)">${t('activities.select_all')}</button>`;
       html += `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="selectAllPackItems('${activityId}', false)">${t('activities.clear_sel')}</button>`;
       html += `<button class="btn btn-primary text-[10px] px-2 py-0.5" onclick="processSelectedPackItems('${activityId}')">${t('activities.export_selected')}</button>`;
       html += `</div></div>`;
 
-      html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[500px] overflow-y-auto">`;
+      html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[600px] overflow-y-auto">`;
       const items = data.items || [];
       items.forEach(item => {
         const stem = item.stem;
         const texUrl = `/output/temp/activity_extract/activity_pack_extract/Texture2D/${stem}.png`;
         const hasAll = item.has_all;
         const isSelected = selectedPackItems.has(stem);
-        html += `<div class="card p-1 text-center cursor-pointer ${isSelected ? 'ring-2 ring-[#6e56cf]' : ''}" style="background:var(--bg-overlay);${hasAll ? '' : 'opacity:0.5'}" onclick="togglePackItem('${activityId}', '${stem.replace(/'/g, "\\'")}')" title="${stem}${hasAll ? '' : ' (缺少 skel/atlas)'}">`;
-        html += `<img src="${texUrl}" class="w-full h-16 object-contain rounded" loading="lazy" onerror="this.parentElement.querySelector('.err-msg').style.display='block';this.style.display='none'">`;
+        html += `<div class="card p-1 text-center cursor-pointer ${isSelected ? 'ring-2 ring-[#6e56cf]' : ''}" style="background:var(--bg-overlay);${hasAll ? '' : 'opacity:0.5'}" onclick="togglePackItem('${activityId}', '${stem.replace(/'/g, "\\'")}')" title="${stem}${hasAll ? '' : ' (missing skel/atlas)'}">`;
+        html += `<img src="${texUrl}" class="w-full ${sizeClass} object-contain rounded" loading="lazy" onerror="this.parentElement.querySelector('.err-msg').style.display='block';this.style.display='none'">`;
         html += `<span class="err-msg text-[9px] text-[#e5484d] hidden">${t('activities.no_image')}</span>`;
         html += `<div class="text-[9px] text-[#636366] truncate mt-0.5">${stem.substring(0, 20)}</div>`;
         if (!hasAll) html += `<div class="text-[8px] text-[#f5a623]">${t('activities.missing_files')}</div>`;
@@ -2442,6 +2475,10 @@ function switchTab(name) {
       });
       html += `</div></div>`;
       browserEl.innerHTML = html;
+    }
+
+    function changeZoom(delta) {
+      packZoom = Math.max(0, Math.min(6, packZoom + delta));
     }
 
     function togglePackItem(activityId, stem) {
