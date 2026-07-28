@@ -701,7 +701,7 @@
 <div class="tab" data-tab="activities" onclick="switchTab('activities')">
       <span class="flex items-center gap-1.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-        <span>活動</span>
+        <span data-i18n="tab.activities">活動</span>
       </span>
     </div>
     <div class="tab" data-tab="settings" onclick="switchTab('settings')">
@@ -833,15 +833,15 @@
       <div class="max-w-6xl mx-auto">
         <div class="flex items-center justify-between mb-5">
           <div>
-            <h2 class="text-base font-semibold">活動分析</h2>
-            <p class="text-xs text-[#636366] mt-0.5">自動偵測 activities_packs 並提取活動英雄資源</p>
+            <h2 class="text-base font-semibold" data-i18n="activities.title">活動分析</h2>
+            <p class="text-xs text-[#636366] mt-0.5" data-i18n="activities.desc">自動偵測 activities_packs 並提取活動英雄資源</p>
           </div>
           <div class="flex gap-2">
-            <button class="btn btn-ghost text-xs" onclick="buildResourceIndex()" id="btn-build-index">建立索引</button>
-            <button class="btn btn-ghost text-xs" onclick="compareResourceIndexes()" id="btn-compare-index">新舊比對</button>
+            <button class="btn btn-ghost text-xs" onclick="buildResourceIndex()" id="btn-build-index" data-i18n="activities.build_index">建立索引</button>
+            <button class="btn btn-ghost text-xs" onclick="compareResourceIndexes()" id="btn-compare-index" data-i18n="activities.compare">新舊比對</button>
             <button class="btn btn-secondary" onclick="loadActivities()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              <span>掃描活動</span>
+              <span data-i18n="activities.scan">掃描活動</span>
             </button>
           </div>
         </div>
@@ -849,7 +849,7 @@
         <div id="index-status" class="card p-3 mb-4 text-xs text-[#636366] hidden"></div>
 
         <div id="activities-content" class="space-y-6">
-          <div class="text-[#636366] text-sm text-center py-12">點擊「掃描活動」載入活動列表</div>
+          <div class="text-[#636366] text-sm text-center py-12" data-i18n="activities.scan_hint">點擊「掃描活動」載入活動列表</div>
         </div>
       </div>
     </div>
@@ -1236,6 +1236,41 @@
         'settings.spinepro.alpha_thresh': '透明底標', 'settings.spinepro.alpha_dither': 'Alpha 遞色',
         'settings.spinepro.loop': '永久循環', 'settings.spinepro.restore': '還原預設',
         'settings.save': '儲存設定', 'settings.saved': '已儲存',
+        'tab.activities': '活動',
+        'activities.title': '活動分析', 'activities.desc': '自動偵測 activities_packs 並提取活動英雄資源',
+        'activities.scan': '掃描活動', 'activities.scan_hint': '點擊「掃描活動」載入活動列表',
+        'activities.build_index': '建立索引', 'activities.compare': '新舊比對',
+        'activities.ab_map': 'AB 對應', 'activities.browse_pack': '瀏覽活動包',
+        'activities.texture_preview': '圖片預覽', 'activities.auto_export': '自動匯出',
+        'activities.parsing': '⏳ 解析中...', 'activities.no_heroes': '未檢測到英雄',
+        'activities.loading_pack': '⏳ 載入活動包內容...',
+        'activities.pack_not_extracted': '請先確認活動包已解包（點擊「圖片預覽」觸發解包）',
+        'activities.pack_content': '活動包內容', 'activities.complete_count': '{0} 完整 / {1} 圖片',
+        'activities.select_all': '全選', 'activities.clear_sel': '清除',
+        'activities.export_selected': '匯出選取', 'activities.no_image': '無圖片',
+        'activities.missing_files': '缺少檔案', 'activities.spine_files': '活動 Spine 檔案',
+        'activities.texture_preview_label': 'Texture2D 圖片預覽 ({0})',
+        'activities.no_images': '無圖片', 'activities.hero_ab_match': '英雄 AB 檔案對應',
+        'activities.no_ab_files': '無獨立 AB 檔案（英雄僅存在活動包內）',
+        'activities.only_in_pack': '僅在活動包內（無獨立 AB）',
+        'activities.hero_ab_count': '{0} 個 AB 檔案',
+        'activities.index_no_index': '⚠️ 尚未建立資源索引。請先點擊「建立索引」拍攝當前 AB 目錄快照，遊戲更新後再點擊「新舊比對」即可偵測變更。',
+        'activities.index_latest': '📋 最新索引：{0} · {1} 個檔案 · {2} MB（共 {3} 份歷史索引）',
+        'activities.index_building': '⏳ 建立索引中...',
+        'activities.index_built': '✅ 索引建立完成：{0} · {1} 個檔案 ({2} MB) · 英雄: {3} 活動spine: {4} 活動包: {5} 其他: {6}',
+        'activities.index_failed': '❌ 索引建立失敗: {0}',
+        'activities.index_first_built': '📌 第一份索引已建立。請在遊戲更新後再次點擊「新舊比對」以偵測變更。',
+        'activities.compare_running': '⏳ 比對新舊資源中...',
+        'activities.compare_done': '📊 比對完成：🟢新增 {0} 🟡修改 {1} 🔴移除 {2} ⚪未變 {3}',
+        'activities.compare_changes': '🔔 偵測到變更！請點擊「掃描活動」查看新活動內容。',
+        'activities.export_confirm_ab': '確定要匯出活動 {0} 的 {1} 個英雄？\n（有獨立 AB：{2}）',
+        'activities.export_confirm_noab': '活動 {0} 有 {1} 個英雄，但無獨立 AB 檔案。\n將嘗試從活動包提取。確定繼續？',
+        'activities.no_exportable': '此活動沒有可匯出的英雄',
+        'activities.process_confirm': '確定要匯出 {0} 個選取項目？',
+        'activities.process_started': '處理活動包選取項目 ({0})...',
+        'activities.process_done': '完成：已處理 {0} 個項目，錯誤 {1}',
+        'activities.export_started': '啟動活動 {0} 自動匯出...',
+        'activities.export_launched': '活動 {0}：已啟動 {1} 個英雄',
       },
       'zh-CN': {
         'tab.library': '图鉴', 'tab.run': '执行', 'tab.settings': '设置',
@@ -1269,6 +1304,41 @@
         'settings.spinepro.alpha_thresh': '透明底标', 'settings.spinepro.alpha_dither': 'Alpha 递色',
         'settings.spinepro.loop': '永久循环', 'settings.spinepro.restore': '还原默认',
         'settings.save': '保存设置', 'settings.saved': '已保存',
+        'tab.activities': '活动',
+        'activities.title': '活动分析', 'activities.desc': '自动侦测 activities_packs 并提取活动英雄资源',
+        'activities.scan': '扫描活动', 'activities.scan_hint': '点击「扫描活动」加载活动列表',
+        'activities.build_index': '建立索引', 'activities.compare': '新旧比对',
+        'activities.ab_map': 'AB 对应', 'activities.browse_pack': '浏览活动包',
+        'activities.texture_preview': '图片预览', 'activities.auto_export': '自动导出',
+        'activities.parsing': '⏳ 解析中...', 'activities.no_heroes': '未检测到英雄',
+        'activities.loading_pack': '⏳ 加载活动包内容...',
+        'activities.pack_not_extracted': '请先确认活动包已解包（点击「图片预览」触发解包）',
+        'activities.pack_content': '活动包内容', 'activities.complete_count': '{0} 完整 / {1} 图片',
+        'activities.select_all': '全选', 'activities.clear_sel': '清除',
+        'activities.export_selected': '导出选取', 'activities.no_image': '无图片',
+        'activities.missing_files': '缺少文件', 'activities.spine_files': '活动 Spine 文件',
+        'activities.texture_preview_label': 'Texture2D 图片预览 ({0})',
+        'activities.no_images': '无图片', 'activities.hero_ab_match': '英雄 AB 文件对应',
+        'activities.no_ab_files': '无独立 AB 文件（英雄仅存在活动包内）',
+        'activities.only_in_pack': '仅在活动包内（无独立 AB）',
+        'activities.hero_ab_count': '{0} 个 AB 文件',
+        'activities.index_no_index': '⚠️ 尚未建立资源索引。请先点击「建立索引」拍摄当前 AB 目录快照，游戏更新后再点击「新旧比对」即可侦测变更。',
+        'activities.index_latest': '📋 最新索引：{0} · {1} 个文件 · {2} MB（共 {3} 份历史索引）',
+        'activities.index_building': '⏳ 建立索引中...',
+        'activities.index_built': '✅ 索引建立完成：{0} · {1} 个文件 ({2} MB) · 英雄: {3} 活动spine: {4} 活动包: {5} 其他: {6}',
+        'activities.index_failed': '❌ 索引建立失败: {0}',
+        'activities.index_first_built': '📌 第一份索引已建立。请在游戏更新后再次点击「新旧比对」以侦测变更。',
+        'activities.compare_running': '⏳ 比对新旧资源中...',
+        'activities.compare_done': '📊 比对完成：🟢新增 {0} 🟡修改 {1} 🔴移除 {2} ⚪未变 {3}',
+        'activities.compare_changes': '🔔 侦测到变更！请点击「扫描活动」查看新活动内容。',
+        'activities.export_confirm_ab': '确定要导出活动 {0} 的 {1} 个英雄？\n（有独立 AB：{2}）',
+        'activities.export_confirm_noab': '活动 {0} 有 {1} 个英雄，但无独立 AB 文件。\n将尝试从活动包提取。确定继续？',
+        'activities.no_exportable': '此活动没有可导出的英雄',
+        'activities.process_confirm': '确定要导出 {0} 个选取项目？',
+        'activities.process_started': '处理活动包选取项目 ({0})...',
+        'activities.process_done': '完成：已处理 {0} 个项目，错误 {1}',
+        'activities.export_started': '启动活动 {0} 自动导出...',
+        'activities.export_launched': '活动 {0}：已启动 {1} 个英雄',
       },
       'en': {
         'tab.library': 'Library', 'tab.run': 'Run', 'tab.settings': 'Settings',
@@ -1302,6 +1372,41 @@
         'settings.spinepro.alpha_thresh': 'Alpha Threshold', 'settings.spinepro.alpha_dither': 'Alpha Dither',
         'settings.spinepro.loop': 'Loop Forever', 'settings.spinepro.restore': 'Restore Defaults',
         'settings.save': 'Save Settings', 'settings.saved': 'Saved',
+        'tab.activities': 'Activity',
+        'activities.title': 'Activity Analysis', 'activities.desc': 'Auto-detect activities_packs and extract activity hero assets',
+        'activities.scan': 'Scan Activities', 'activities.scan_hint': 'Click "Scan Activities" to load the activity list',
+        'activities.build_index': 'Build Index', 'activities.compare': 'Compare',
+        'activities.ab_map': 'AB Map', 'activities.browse_pack': 'Browse Pack',
+        'activities.texture_preview': 'Image Preview', 'activities.auto_export': 'Auto Export',
+        'activities.parsing': '⏳ Parsing...', 'activities.no_heroes': 'No heroes detected',
+        'activities.loading_pack': '⏳ Loading activity pack...',
+        'activities.pack_not_extracted': 'Activity pack not extracted yet (click "Image Preview" to trigger extraction)',
+        'activities.pack_content': 'Activity Pack Content', 'activities.complete_count': '{0} complete / {1} images',
+        'activities.select_all': 'Select All', 'activities.clear_sel': 'Clear',
+        'activities.export_selected': 'Export Selected', 'activities.no_image': 'No image',
+        'activities.missing_files': 'Missing files', 'activities.spine_files': 'Activity Spine Files',
+        'activities.texture_preview_label': 'Texture2D Preview ({0})',
+        'activities.no_images': 'No images', 'activities.hero_ab_match': 'Hero AB File Mapping',
+        'activities.no_ab_files': 'No independent AB files (heroes only in activity pack)',
+        'activities.only_in_pack': 'Only in pack (no independent AB)',
+        'activities.hero_ab_count': '{0} AB files',
+        'activities.index_no_index': '⚠️ No resource index yet. Click "Build Index" to snapshot the current AB directory, then compare after a game update.',
+        'activities.index_latest': '📋 Latest index: {0} · {1} files · {2} MB ({3} historical indexes)',
+        'activities.index_building': '⏳ Building index...',
+        'activities.index_built': '✅ Index built: {0} · {1} files ({2} MB) · Heroes: {3} ActivitySpine: {4} ActivityPack: {5} Other: {6}',
+        'activities.index_failed': '❌ Index build failed: {0}',
+        'activities.index_first_built': '📌 First index created. Click "Compare" after a game update to detect changes.',
+        'activities.compare_running': '⏳ Comparing resources...',
+        'activities.compare_done': '📊 Compare done: 🟢New {0} 🟡Modified {1} 🔴Removed {2} ⚪Unchanged {3}',
+        'activities.compare_changes': '🔔 Changes detected! Click "Scan Activities" to view new activity content.',
+        'activities.export_confirm_ab': 'Export {1} heroes for activity {0}?\n(With independent AB: {2})',
+        'activities.export_confirm_noab': 'Activity {0} has {1} heroes but no independent AB files.\nWill attempt to extract from activity pack. Continue?',
+        'activities.no_exportable': 'No exportable heroes in this activity',
+        'activities.process_confirm': 'Export {0} selected items?',
+        'activities.process_started': 'Processing selected items ({0})...',
+        'activities.process_done': 'Done: {0} processed, {1} errors',
+        'activities.export_started': 'Starting activity {0} auto export...',
+        'activities.export_launched': 'Activity {0}: launched {1} heroes',
       },
       'ja': {
         'tab.library': '図鑑', 'tab.run': '実行', 'tab.settings': '設定',
@@ -1335,6 +1440,41 @@
         'settings.spinepro.alpha_thresh': 'アルファしきい値', 'settings.spinepro.alpha_dither': 'アルファディザ',
         'settings.spinepro.loop': 'ループ再生', 'settings.spinepro.restore': 'デフォルトに戻す',
         'settings.save': '設定を保存', 'settings.saved': '保存済み',
+        'tab.activities': 'アクティビティ',
+        'activities.title': 'アクティビティ分析', 'activities.desc': 'activities_packs を自動検出しアクティビティヒーローを抽出',
+        'activities.scan': 'アクティビティスキャン', 'activities.scan_hint': '「アクティビティスキャン」をクリックしてリストを読み込む',
+        'activities.build_index': 'インデックス構築', 'activities.compare': '比較',
+        'activities.ab_map': 'AB マップ', 'activities.browse_pack': 'パック閲覧',
+        'activities.texture_preview': '画像プレビュー', 'activities.auto_export': '自動エクスポート',
+        'activities.parsing': '⏳ 解析中...', 'activities.no_heroes': 'ヒーロー未検出',
+        'activities.loading_pack': '⏳ パック読み込み中...',
+        'activities.pack_not_extracted': 'パックが未展開です（「画像プレビュー」で展開）',
+        'activities.pack_content': 'パック内容', 'activities.complete_count': '{0} 完全 / {1} 画像',
+        'activities.select_all': '全選択', 'activities.clear_sel': 'クリア',
+        'activities.export_selected': '選択をエクスポート', 'activities.no_image': '画像なし',
+        'activities.missing_files': 'ファイル不足', 'activities.spine_files': 'Spine ファイル',
+        'activities.texture_preview_label': 'Texture2D プレビュー ({0})',
+        'activities.no_images': '画像なし', 'activities.hero_ab_match': 'ヒーロー AB 対応',
+        'activities.no_ab_files': '独立 AB なし（パック内のみ）',
+        'activities.only_in_pack': 'パック内のみ（独立 AB なし）',
+        'activities.hero_ab_count': '{0} 個の AB ファイル',
+        'activities.index_no_index': '⚠️ インデックス未作成。「構築」でスナップショットを作成し、更新後に「比較」してください。',
+        'activities.index_latest': '📋 最新: {0} · {1} ファイル · {2} MB（履歴 {3} 件）',
+        'activities.index_building': '⏳ 構築中...',
+        'activities.index_built': '✅ 構築完了: {0} · {1} ファイル ({2} MB) · ヒーロー: {3} Spine: {4} パック: {5} 他: {6}',
+        'activities.index_failed': '❌ 構築失敗: {0}',
+        'activities.index_first_built': '📌 初回インデックス作成。更新後に「比較」で変更を検出。',
+        'activities.compare_running': '⏳ 比較中...',
+        'activities.compare_done': '📊 比較完了: 🟢新規 {0} 🟡変更 {1} 🔴削除 {2} ⚪不变 {3}',
+        'activities.compare_changes': '🔔 変更検出！「スキャン」で新コンテンツを確認。',
+        'activities.export_confirm_ab': 'アクティビティ {0} の {1} ヒーローをエクスポート？\n（独立 AB: {2}）',
+        'activities.export_confirm_noab': '{0} に {1} ヒーローあり、独立 AB なし。\nパックから抽出を試みます。続行？',
+        'activities.no_exportable': 'エクスポート可能なヒーローなし',
+        'activities.process_confirm': '{0} 項目をエクスポート？',
+        'activities.process_started': '選択項目処理中 ({0})...',
+        'activities.process_done': '完了: {0} 処理, {1} エラー',
+        'activities.export_started': 'アクティビティ {0} 自動エクスポート開始...',
+        'activities.export_launched': 'アクティビティ {0}: {1} ヒーロー起動',
       },
       'ko': {
         'tab.library': '도감', 'tab.run': '실행', 'tab.settings': '설정',
@@ -1368,6 +1508,41 @@
         'settings.spinepro.alpha_thresh': '알파 임계값', 'settings.spinepro.alpha_dither': '알파 디더',
         'settings.spinepro.loop': '루프 재생', 'settings.spinepro.restore': '기본값 복원',
         'settings.save': '설정 저장', 'settings.saved': '저장됨',
+        'tab.activities': '액티비티',
+        'activities.title': '액티비티 분석', 'activities.desc': 'activities_packs 자동 감지 및 액티비티 영웅 추출',
+        'activities.scan': '액티비티 스캔', 'activities.scan_hint': '「액티비티 스캔」을 클릭하여 목록 로드',
+        'activities.build_index': '인덱스 구축', 'activities.compare': '비교',
+        'activities.ab_map': 'AB 매핑', 'activities.browse_pack': '팩 탐색',
+        'activities.texture_preview': '이미지 미리보기', 'activities.auto_export': '자동 내보내기',
+        'activities.parsing': '⏳ 분석 중...', 'activities.no_heroes': '영웅 미감지',
+        'activities.loading_pack': '⏳ 팩 로딩 중...',
+        'activities.pack_not_extracted': '팩이 추출되지 않음（「이미지 미리보기」로 추출）',
+        'activities.pack_content': '팩 내용', 'activities.complete_count': '{0} 완전 / {1} 이미지',
+        'activities.select_all': '전체 선택', 'activities.clear_sel': '해제',
+        'activities.export_selected': '선택 내보내기', 'activities.no_image': '이미지 없음',
+        'activities.missing_files': '파일 부족', 'activities.spine_files': 'Spine 파일',
+        'activities.texture_preview_label': 'Texture2D 미리보기 ({0})',
+        'activities.no_images': '이미지 없음', 'activities.hero_ab_match': '영웅 AB 매핑',
+        'activities.no_ab_files': '독립 AB 없음（팩 내에만 존재）',
+        'activities.only_in_pack': '팩 내에만（독립 AB 없음）',
+        'activities.hero_ab_count': '{0}개 AB 파일',
+        'activities.index_no_index': '⚠️ 인덱스 없음. 「구축」으로 스냅샷 생성 후 업데이트 시 「비교」하세요.',
+        'activities.index_latest': '📋 최신: {0} · {1} 파일 · {2} MB（이력 {3}건）',
+        'activities.index_building': '⏳ 구축 중...',
+        'activities.index_built': '✅ 구축 완료: {0} · {1} 파일 ({2} MB) · 영웅: {3} Spine: {4} 팩: {5} 기타: {6}',
+        'activities.index_failed': '❌ 구축 실패: {0}',
+        'activities.index_first_built': '📌 첫 인덱스 생성. 업데이트 후 「비교」로 변경 감지.',
+        'activities.compare_running': '⏳ 비교 중...',
+        'activities.compare_done': '📊 비교 완료: 🟢신규 {0} 🟡변경 {1} 🔴삭제 {2} ⚪불변 {3}',
+        'activities.compare_changes': '🔔 변경 감지! 「스캔」으로 새 콘텐츠 확인.',
+        'activities.export_confirm_ab': '액티비티 {0}의 {1} 영웅 내보내기?\n(독립 AB: {2})',
+        'activities.export_confirm_noab': '{0}에 {1} 영웅 있음, 독립 AB 없음.\n팩에서 추출 시도. 계속?',
+        'activities.no_exportable': '내보낼 영웅 없음',
+        'activities.process_confirm': '{0}개 항목 내보내기?',
+        'activities.process_started': '선택 항목 처리 중 ({0})...',
+        'activities.process_done': '완료: {0} 처리, {1} 오류',
+        'activities.export_started': '액티비티 {0} 자동 내보내기 시작...',
+        'activities.export_launched': '액티비티 {0}: {1} 영웅 시작',
       },
       'ru': {
         'tab.library': 'Библиотека', 'tab.run': 'Запуск', 'tab.settings': 'Настройки',
@@ -1401,6 +1576,41 @@
         'settings.spinepro.alpha_thresh': 'Порог альфа', 'settings.spinepro.alpha_dither': 'Дизеринг альфа',
         'settings.spinepro.loop': 'Зациклить', 'settings.spinepro.restore': 'Сбросить',
         'settings.save': 'Сохранить', 'settings.saved': 'Сохранено',
+        'tab.activities': 'Активность',
+        'activities.title': 'Анализ активностей', 'activities.desc': 'Автоопределение activities_packs и извлечение героев',
+        'activities.scan': 'Сканировать', 'activities.scan_hint': 'Нажмите «Сканировать» для загрузки списка',
+        'activities.build_index': 'Индекс', 'activities.compare': 'Сравнить',
+        'activities.ab_map': 'AB карта', 'activities.browse_pack': 'Пакет',
+        'activities.texture_preview': 'Превью', 'activities.auto_export': 'Экспорт',
+        'activities.parsing': '⏳ Анализ...', 'activities.no_heroes': 'Герои не найдены',
+        'activities.loading_pack': '⏳ Загрузка пакета...',
+        'activities.pack_not_extracted': 'Пакет не извлечен (нажмите «Превью» для извлечения)',
+        'activities.pack_content': 'Содержимое пакета', 'activities.complete_count': '{0} полных / {1} изображений',
+        'activities.select_all': 'Выбрать все', 'activities.clear_sel': 'Снять',
+        'activities.export_selected': 'Экспорт выбранного', 'activities.no_image': 'Нет изображения',
+        'activities.missing_files': 'Нет файлов', 'activities.spine_files': 'Файлы Spine',
+        'activities.texture_preview_label': 'Превью Texture2D ({0})',
+        'activities.no_images': 'Нет изображений', 'activities.hero_ab_match': 'Соответствие AB героев',
+        'activities.no_ab_files': 'Нет отдельных AB (только в пакете)',
+        'activities.only_in_pack': 'Только в пакете (без отдельных AB)',
+        'activities.hero_ab_count': '{0} файлов AB',
+        'activities.index_no_index': '⚠️ Индекс не создан. Нажмите «Индекс» для снимка, затем «Сравнить» после обновления.',
+        'activities.index_latest': '📋 Последний: {0} · {1} файлов · {2} МБ (история: {3})',
+        'activities.index_building': '⏳ Создание индекса...',
+        'activities.index_built': '✅ Индекс: {0} · {1} файлов ({2} МБ) · Герои: {3} Spine: {4} Пакет: {5} Прочее: {6}',
+        'activities.index_failed': '❌ Ошибка индекса: {0}',
+        'activities.index_first_built': '📌 Первый индекс создан. Нажмите «Сравнить» после обновления игры.',
+        'activities.compare_running': '⏳ Сравнение...',
+        'activities.compare_done': '📊 Сравнение: 🟢Новые {0} 🟡Измен. {1} 🔴Удал. {2} ⚪Без изм. {3}',
+        'activities.compare_changes': '🔔 Обнаружены изменения! Нажмите «Сканировать» для просмотра.',
+        'activities.export_confirm_ab': 'Экспортировать {1} героев активности {0}?\n(Отдельные AB: {2})',
+        'activities.export_confirm_noab': 'В активности {0} {1} героев, нет отдельных AB.\nИзвлечь из пакета?',
+        'activities.no_exportable': 'Нет героев для экспорта',
+        'activities.process_confirm': 'Экспортировать {0} выбранных?',
+        'activities.process_started': 'Обработка выбранных ({0})...',
+        'activities.process_done': 'Готово: {0} обработано, {1} ошибок',
+        'activities.export_started': 'Запуск автоэкспорта активности {0}...',
+        'activities.export_launched': 'Активность {0}: запущено {1} героев',
       },
     };
 
@@ -1969,14 +2179,14 @@ function switchTab(name) {
           heroesEl.innerHTML = heroIds.slice(0, 30).map(h => {
             const hasAb = d.hero_ab_files && d.hero_ab_files[h];
             const color = hasAb ? 'var(--text-dim)' : 'var(--text-faint)';
-            const title = hasAb ? '' : '（無獨立 AB 檔案，僅在活動包內）';
+            const title = hasAb ? '' : t('activities.no_ab_files');
             return `<span class="mono text-[11px] px-2 py-0.5 rounded" style="background:var(--bg-raised);color:${color}" title="${title}">${h}${hasAb ? '' : ' *'}</span>`;
           }).join('');
           if (heroIds.length > 30) {
             heroesEl.innerHTML += `<span class="text-[11px] text-[#636366]">+${heroIds.length - 30} 更多</span>`;
           }
         } else {
-          heroesEl.innerHTML = '<span class="text-[11px] text-[#636366]">未檢測到英雄</span>';
+          heroesEl.innerHTML = '<span class="text-[11px] text-[#636366]">' + t('activities.no_heroes') + '</span>';
         }
       } catch (e) {
         heroesEl.innerHTML = `<span class="text-[11px] text-[#e5484d]">解析失敗: ${e.message}</span>`;
@@ -2006,14 +2216,14 @@ function switchTab(name) {
               <div class="text-[11px] text-[#636366] mt-1">${a.pack_file} (${sizeMB} MB) · ${a.spine_file_count} spine 檔案</div>
             </div>
             <div class="flex gap-2">
-              <button class="btn btn-secondary text-xs" onclick="loadActivityDetail('${a.activity_id}', ${idx})">AB 對應</button>
-              <button class="btn btn-secondary text-xs" onclick="loadActivityPackBrowser('${a.activity_id}')">瀏覽活動包</button>
-              <button class="btn btn-secondary text-xs" onclick="loadTexturePreview('${a.activity_id}')">圖片預覽</button>
-              <button class="btn btn-primary text-xs" onclick="extractActivity('${a.activity_id}')">自動匯出</button>
+              <button class="btn btn-secondary text-xs" onclick="loadActivityDetail('${a.activity_id}', ${idx})">${t('activities.ab_map')}</button>
+              <button class="btn btn-secondary text-xs" onclick="loadActivityPackBrowser('${a.activity_id}')">${t('activities.browse_pack')}</button>
+              <button class="btn btn-secondary text-xs" onclick="loadTexturePreview('${a.activity_id}')">${t('activities.texture_preview')}</button>
+              <button class="btn btn-primary text-xs" onclick="extractActivity('${a.activity_id}')">${t('activities.auto_export')}</button>
             </div>
           </div>
           <div class="flex flex-wrap gap-1" id="act-heroes-${a.activity_id}">
-            ${heroIds.length ? heroIds.slice(0, 30).map(h => `<span class="mono text-[11px] px-2 py-0.5 rounded" style="background:var(--bg-raised);color:var(--text-dim)">${h}</span>`).join('') : '<span class="text-[11px] text-[#f5a623]">⏳ 解析中...</span>'}
+            ${heroIds.length ? heroIds.slice(0, 30).map(h => `<span class="mono text-[11px] px-2 py-0.5 rounded" style="background:var(--bg-raised);color:var(--text-dim)">${h}</span>`).join('') : '<span class="text-[11px] text-[#f5a623]">' + t('activities.parsing') + '</span>'}
           </div>
           <div id="act-detail-${a.activity_id}" class="mt-3 hidden"></div>
           <div id="act-preview-${a.activity_id}" class="mt-3 hidden"></div>
@@ -2050,23 +2260,23 @@ function switchTab(name) {
     function renderActivityDetail(activityId, d) {
       const detailEl = document.getElementById(`act-detail-${activityId}`);
       let html = `<div class="border-t border-border pt-3 mt-2">`;
-      html += `<div class="text-xs font-medium mb-2">英雄 AB 檔案對應</div>`;
+      html += `<div class="text-xs font-medium mb-2">${t('activities.hero_ab_match')}</div>`;
       html += `<div class="space-y-1">`;
       const heroIds = Object.keys(d.hero_ab_files || {});
       if (heroIds.length) {
         heroIds.forEach(hid => {
           const files = d.hero_ab_files[hid];
-          html += `<div class="flex items-center gap-2 text-xs"><span class="mono font-medium text-[#30a46c]">${hid}</span><span class="text-[#636366]">${files.length} 個 AB 檔案</span></div>`;
+          html += `<div class="flex items-center gap-2 text-xs"><span class="mono font-medium text-[#30a46c]">${hid}</span><span class="text-[#636366]">${t('activities.hero_ab_count', files.length)}</span></div>`;
           files.forEach(f => {
             html += `<div class="text-[11px] text-[#4a4a50] ml-6 mono truncate">${f}</div>`;
           });
         });
       } else {
-        html += `<div class="text-[11px] text-[#636366]">無獨立 AB 檔案（英雄僅存在活動包內）</div>`;
+        html += `<div class="text-[11px] text-[#636366]">${t('activities.no_ab_files')}</div>`;
       }
       const onlyInPack = (d.hero_ids || []).filter(h => !(d.hero_ab_files || {})[h]);
       if (onlyInPack.length) {
-        html += `<div class="text-xs font-medium mt-3 mb-1">僅在活動包內（無獨立 AB）</div>`;
+        html += `<div class="text-xs font-medium mt-3 mb-1">${t('activities.only_in_pack')}</div>`;
         html += `<div class="flex flex-wrap gap-1">`;
         onlyInPack.forEach(h => {
           html += `<span class="mono text-[11px] px-2 py-0.5 rounded" style="background:var(--bg-raised);color:var(--text-faint)">${h}</span>`;
@@ -2074,7 +2284,7 @@ function switchTab(name) {
         html += `</div>`;
       }
       if ((d.spine_files || []).length) {
-        html += `<div class="text-xs font-medium mt-3 mb-1">活動 Spine 檔案</div>`;
+        html += `<div class="text-xs font-medium mt-3 mb-1">${t('activities.spine_files')}</div>`;
         (d.spine_files || []).forEach(f => {
           html += `<div class="text-[11px] text-[#4a4a50] mono">${f}</div>`;
         });
@@ -2095,7 +2305,7 @@ function switchTab(name) {
         const result = await api(`/api/activities/${activityId}/preview`, 'POST', {});
         textureImages = result.images || [];
         let html = `<div class="border-t border-border pt-3 mt-2">`;
-        html += `<div class="text-xs font-medium mb-2">Texture2D 圖片預覽 (${result.image_count})</div>`;
+        html += `<div class="text-xs font-medium mb-2">${t('activities.texture_preview_label', result.image_count)}</div>`;
         if (textureImages.length) {
           html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-96 overflow-y-auto">`;
           textureImages.forEach(img => {
@@ -2107,7 +2317,7 @@ function switchTab(name) {
           });
           html += `</div>`;
         } else {
-          html += `<div class="text-[11px] text-[#636366]">無圖片</div>`;
+          html += `<div class="text-[11px] text-[#636366]">${t('activities.no_images')}</div>`;
         }
         html += `</div>`;
         previewEl.innerHTML = html;
@@ -2122,15 +2332,15 @@ function switchTab(name) {
       const abHeroes = d ? Object.keys(d.hero_ab_files || {}) : [];
       const extractable = abHeroes.length > 0 ? abHeroes : heroIds;
       if (!extractable.length) {
-        alert('此活動沒有可匯出的英雄');
+        alert(t('activities.no_exportable'));
         return;
       }
       const msg = abHeroes.length > 0
-        ? `確定要匯出活動 ${activityId} 的 ${extractable.length} 個英雄？\n（有獨立 AB：${abHeroes.join(', ')}）`
-        : `活動 ${activityId} 有 ${heroIds.length} 個英雄，但無獨立 AB 檔案。\n將嘗試從活動包提取。確定繼續？`;
+        ? t('activities.export_confirm_ab', activityId, extractable.length, abHeroes.join(', '))
+        : t('activities.export_confirm_noab', activityId, heroIds.length);
       if (!confirm(msg)) return;
       try {
-        appendLog(`啟動活動 ${activityId} 自動匯出...`);
+        appendLog(t('activities.export_started', activityId));
         const data = await api(`/api/activities/${activityId}/extract`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
@@ -2154,7 +2364,7 @@ function switchTab(name) {
         return;
       }
       browserEl.classList.remove('hidden');
-      browserEl.innerHTML = '<div class="text-[11px] text-[#f5a623]">⏳ 載入活動包內容...</div>';
+      browserEl.innerHTML = '<div class="text-[11px] text-[#f5a623]">' + t('activities.loading_pack') + '</div>';
 
       try {
         const data = await api(`/api/activities/${activityId}/pack-files`);
@@ -2162,7 +2372,7 @@ function switchTab(name) {
         selectedPackItems = new Set();
         renderPackBrowser(activityId, data);
       } catch (e) {
-        browserEl.innerHTML = `<div class="text-red-400 text-xs">${e.message}<br><span class="text-[#636366]">請先確認活動包已解包（點擊「圖片預覽」觸發解包）</span></div>`;
+        browserEl.innerHTML = `<div class="text-red-400 text-xs">${e.message}<br><span class="text-[#636366]">${t('activities.pack_not_extracted')}</span></div>`;
       }
     }
 
@@ -2170,11 +2380,11 @@ function switchTab(name) {
       const browserEl = document.getElementById(`act-browser-${activityId}`);
       let html = `<div class="border-t border-border pt-3 mt-2">`;
       html += `<div class="flex items-center justify-between mb-2">`;
-      html += `<div class="text-xs font-medium">活動包內容 (${data.complete_items} 完整 / ${data.total_textures} 圖片)</div>`;
+      html += `<div class="text-xs font-medium">${t('activities.pack_content')} (${t('activities.complete_count', data.complete_items, data.total_textures)})</div>`;
       html += `<div class="flex gap-2">`;
-      html += `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="selectAllPackItems('${activityId}', true)">全選</button>`;
-      html += `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="selectAllPackItems('${activityId}', false)">清除</button>`;
-      html += `<button class="btn btn-primary text-[10px] px-2 py-0.5" onclick="processSelectedPackItems('${activityId}')">匯出選取</button>`;
+      html += `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="selectAllPackItems('${activityId}', true)">${t('activities.select_all')}</button>`;
+      html += `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="selectAllPackItems('${activityId}', false)">${t('activities.clear_sel')}</button>`;
+      html += `<button class="btn btn-primary text-[10px] px-2 py-0.5" onclick="processSelectedPackItems('${activityId}')">${t('activities.export_selected')}</button>`;
       html += `</div></div>`;
 
       html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[500px] overflow-y-auto">`;
@@ -2186,9 +2396,9 @@ function switchTab(name) {
         const isSelected = selectedPackItems.has(stem);
         html += `<div class="card p-1 text-center cursor-pointer ${isSelected ? 'ring-2 ring-[#6e56cf]' : ''}" style="background:var(--bg-overlay);${hasAll ? '' : 'opacity:0.5'}" onclick="togglePackItem('${activityId}', '${stem.replace(/'/g, "\\'")}')" title="${stem}${hasAll ? '' : ' (缺少 skel/atlas)'}">`;
         html += `<img src="${texUrl}" class="w-full h-16 object-contain rounded" loading="lazy" onerror="this.parentElement.querySelector('.err-msg').style.display='block';this.style.display='none'">`;
-        html += `<span class="err-msg text-[9px] text-[#e5484d] hidden">無圖片</span>`;
+        html += `<span class="err-msg text-[9px] text-[#e5484d] hidden">${t('activities.no_image')}</span>`;
         html += `<div class="text-[9px] text-[#636366] truncate mt-0.5">${stem.substring(0, 20)}</div>`;
-        if (!hasAll) html += `<div class="text-[8px] text-[#f5a623]">缺少檔案</div>`;
+        if (!hasAll) html += `<div class="text-[8px] text-[#f5a623]">${t('activities.missing_files')}</div>`;
         html += `</div>`;
       });
       html += `</div></div>`;
@@ -2222,11 +2432,11 @@ function switchTab(name) {
         return;
       }
       const stems = [...selectedPackItems];
-      if (!confirm(`確定要匯出 ${stems.length} 個選取項目？`)) return;
+      if (!confirm(t('activities.process_confirm', stems.length))) return;
       try {
-        appendLog(`處理活動包選取項目 (${stems.length})...`);
+        appendLog(t('activities.process_started', stems.length));
         const data = await api(`/api/activities/${activityId}/process-selected`, 'POST', {selected_stems: stems});
-        appendLog(`完成：已處理 ${data.processed} 個項目，錯誤 ${data.errors}`);
+        appendLog(t('activities.process_done', data.processed, data.errors));
         data.items.forEach(p => {
           appendLog(`  ${p.hero_id}: skel=${p.has_skeleton} atlas=${p.has_atlas} tex=${p.has_texture}`);
         });
@@ -2247,12 +2457,12 @@ function switchTab(name) {
         const indexes = await api('/api/resource-index');
         if (indexes.length === 0) {
           statusEl.classList.remove('hidden');
-          statusEl.innerHTML = '⚠️ 尚未建立資源索引。請先點擊「建立索引」拍攝當前 AB 目錄快照，遊戲更新後再點擊「新舊比對」即可偵測變更。';
+          statusEl.innerHTML = t('activities.index_no_index');
           document.getElementById('btn-compare-index').style.opacity = '0.5';
         } else {
           statusEl.classList.remove('hidden');
           const latest = indexes[0];
-          statusEl.innerHTML = `📋 最新索引：${latest.created_at} · ${latest.file_count} 個檔案 · ${(latest.total_size/1048576).toFixed(1)} MB（共 ${indexes.length} 份歷史索引）`;
+          statusEl.innerHTML = t('activities.index_latest', latest.created_at, latest.file_count, (latest.total_size/1048576).toFixed(1), indexes.length);
           document.getElementById('btn-compare-index').style.opacity = '1';
         }
       } catch (e) {
@@ -2263,14 +2473,14 @@ function switchTab(name) {
     async function buildResourceIndex() {
       const statusEl = document.getElementById('index-status');
       statusEl.classList.remove('hidden');
-      statusEl.innerHTML = '⏳ 建立索引中...';
+      statusEl.innerHTML = t('activities.index_building');
       try {
         const data = await api('/api/resource-index/build', 'POST', {folder: ''});
-        statusEl.innerHTML = `✅ 索引建立完成：${data.created_at} · ${data.file_count} 個檔案 (${(data.total_size/1048576).toFixed(1)} MB) · 英雄: ${data.summary.hero} 活動spine: ${data.summary.activity_spine} 活動包: ${data.summary.activity_pack} 其他: ${data.summary.other}`;
+        statusEl.innerHTML = t('activities.index_built', data.created_at, data.file_count, (data.total_size/1048576).toFixed(1), data.summary.hero, data.summary.activity_spine, data.summary.activity_pack, data.summary.other);
         document.getElementById('btn-compare-index').style.opacity = '1';
         appendLog(`索引建立完成：${data.file_count} 個檔案`);
       } catch (e) {
-        statusEl.innerHTML = `❌ 索引建立失敗: ${e.message}`;
+        statusEl.innerHTML = t('activities.index_failed', e.message);
         appendLog(`索引建立失敗: ${e.message}`);
       }
     }
@@ -2281,20 +2491,20 @@ function switchTab(name) {
         const indexes = await api('/api/resource-index');
         if (indexes.length === 0) {
           statusEl.classList.remove('hidden');
-          statusEl.innerHTML = '⚠️ 尚未建立任何索引，將先自動建立第一份索引...';
+          statusEl.innerHTML = '⚠️ ' + t('activities.index_no_index');
           await buildResourceIndex();
-          statusEl.innerHTML += '<br>📌 第一份索引已建立。請在遊戲更新後再次點擊「新舊比對」以偵測變更。';
+          statusEl.innerHTML += '<br>' + t('activities.index_first_built');
           return;
         }
         statusEl.classList.remove('hidden');
-        statusEl.innerHTML = '⏳ 比對新舊資源中...';
-        appendLog('比對新舊資源索引...');
+        statusEl.innerHTML = t('activities.compare_running');
+        appendLog(t('activities.compare_running'));
         const data = await api('/api/resource-index/compare', 'POST', {old_folder: '', new_folder: ''});
         const s = data.summary;
-        statusEl.innerHTML = `📊 比對完成：🟢新增 ${s.new_count} 🟡修改 ${s.modified_count} 🔴移除 ${s.removed_count} ⚪未變 ${s.unchanged_count}`;
+        statusEl.innerHTML = t('activities.compare_done', s.new_count, s.modified_count, s.removed_count, s.unchanged_count);
         appendLog(`比對完成：新增 ${s.new_count} 修改 ${s.modified_count} 移除 ${s.removed_count} 未變 ${s.unchanged_count}`);
         if (s.new_count > 0 || s.modified_count > 0) {
-          statusEl.innerHTML += '<br>🔔 偵測到變更！請點擊「掃描活動」查看新活動內容。';
+          statusEl.innerHTML += '<br>' + t('activities.compare_changes');
         }
         if (data.new_files.length) {
           appendLog(`--- 新增檔案 (${data.new_files.length}) ---`);
