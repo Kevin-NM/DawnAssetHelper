@@ -2156,6 +2156,15 @@ function switchTab(name) {
       } catch (e) { alert(e.message); }
     }
 
+    // ============================================================
+    // Activities Tab
+    // ============================================================
+    let activitiesData = [];
+    let textureImages = [];
+    let activityHeroesCache = {};
+    let packBrowserData = {};
+    let selectedPackItems = new Set();
+
     // Init
     loadLibrary();
     applyLang();
@@ -2163,11 +2172,8 @@ function switchTab(name) {
     if (langSel) langSel.value = currentLang;
 
     // ============================================================
-    // Activities Tab
+    // Activities Tab functions
     // ============================================================
-    let activitiesData = [];
-    let textureImages = [];
-    let activityHeroesCache = {};
 
     async function loadActivities() {
       const container = document.getElementById('activities-content');
@@ -2372,9 +2378,6 @@ function switchTab(name) {
     }
 
     // Activity Pack Browser
-    let packBrowserData = {};
-    let selectedPackItems = new Set();
-
     async function loadActivityPackBrowser(activityId) {
       const browserEl = document.getElementById(`act-browser-${activityId}`);
       if (!browserEl.classList.contains('hidden')) {
