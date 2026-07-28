@@ -1,5 +1,7 @@
 import re
 import json
+import os
+import shutil
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -131,3 +133,165 @@ class ActivityRunResult:
     gif_failed_count: int
     hero_results: list[dict] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+
+
+def list_activity_pack_files(activity_id: str, output_root: str) -> dict:
+    pack_dir = Path(output_root) / "temp" / "activity_extract" / "activity_pack_extract"
+    tex_dir = pack_dir / "Texture2D"
+    asset_dir = pack_dir / "TextAsset"
+
+    if not tex_dir.exists():
+        return {"activity_id": activity_id, "items": [], "error": "Activity pack not extracted yet"}
+
+    textures = {}
+    for f in tex_dir.iterdir():
+        if f.is_file() and f.suffix.lower() == ".png":
+            textures[f.stem] = {
+                "name": f.name,
+                "stem": f.stem,
+                "path": str(f.relative_to(pack_dir)),
+                "size": f.stat().st_size,
+            }
+
+    text_assets = {}
+    if asset_dir.exists():
+        for f in asset_dir.iterdir():
+            if f.is_file():
+                text_assets[f.name] = {
+                    "name": f.name,
+                    "path": str(f.relative_to(pack_dir)),
+                    "size": f.stat().st_size,
+                }
+
+    items = []
+    for stem, tex in sorted(textures.items()):
+        item = {
+            "stem": stem,
+            "texture": tex,
+            "skeleton": None,
+            "atlas": None,
+            "has_all": False,
+        }
+        skel_name = f"{stem}.skel.prefab"
+        atlas_name = f"{stem}.atlas.prefab"
+        if skel_name in text_assets:
+            item["skeleton"] = text_assets[skel_name]
+        if atlas_name in text_assets:
+            item["atlas"] = text_assets[atlas_name]
+        item["has_all"] = item["skeleton"] is not None and item["atlas"] is not None
+        items.append(item)
+
+    complete = [i for i in items if i["has_all"]]
+    texture_only = [i for i in items if not i["has_all"]]
+
+    return {
+        "activity_id": activity_id,
+        "total_textures": len(textures),
+        "complete_items": len(complete),
+        "texture_only": len(texture_only),
+        "items": items,
+        "complete": complete,
+        "texture_only_items": texture_only,
+    }
+
+
+def process_activity_selected(
+    activity_id: str,
+    selected_stems: list[str],
+    config: AppConfig,
+    output_root: str,
+) -> dict:
+    pack_dir = Path(output_root) / "temp" / "activity_extract" / "activity_pack_extract"
+    tex_dir = pack_dir / "Texture2D"
+    asset_dir = pack_dir / "TextAsset"
+
+    run_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_root = Path(output_root) / "runs" / run_ts
+    activity_heroes_root = run_root / "heroes"
+
+    processed = []
+    errors = []
+
+    for stem in selected_stems:
+        hero_id = f"activity_{stem}"
+        hero_dir = activity_heroes_root / hero_id
+        matched_dir = hero_dir / "matched"
+        matched_dir.mkdir(parents=True, exist_ok=True)
+
+        tex_src = tex_dir / f"{stem}.png"
+        skel_src = asset_dir / f"{stem}.skel.prefab"
+        atlas_src = asset_dir / f"{stem}.atlas.prefab"
+
+        if not tex_src.exists():
+            errors.append(f"{stem}: texture not found")
+            continue
+
+        shutil.copy2(tex_src, matched_dir / f"{hero_id}.png")
+        logger.info(f"[Activity] {stem}: copied texture")
+
+        if skel_src.exists():
+            dest = matched_dir / f"{hero_id}.skel"
+            raw = skel_src.read_bytes()
+
+            from src.services.asset_matcher import strip_unity_skel_header
+            stripped = strip_unity_skel_header(raw)
+            dest.write_bytes(stripped)
+            logger.info(f"[Activity] {stem}: copied skeleton ({len(stripped)} bytes)")
+        else:
+            logger.warning(f"[Activity] {stem}: no skeleton file")
+
+        if atlas_src.exists():
+            dest = matched_dir / f"{hero_id}.atlas"
+            shutil.copy2(atlas_src, dest)
+            logger.info(f"[Activity] {stem}: copied atlas")
+        else:
+            logger.warning(f"[Activity] {stem}: no atlas file")
+
+        processed.append({
+            "stem": stem,
+            "hero_id": hero_id,
+            "has_skeleton": skel_src.exists(),
+            "has_atlas": atlas_src.exists(),
+            "has_texture": True,
+        })
+
+    result = {
+        "activity_id": activity_id,
+        "run_id": run_ts,
+        "processed": len(processed),
+        "errors": len(errors),
+        "items": processed,
+        "error_details": errors,
+    }
+
+    if processed:
+        summary = {
+            "run_id": run_ts,
+            "mode": "activity_selected",
+            "status": "success",
+            "total_heroes": len(processed),
+            "heroes": [
+                {"hero_id": p["hero_id"], "hero_type": "Activity", "status": "success"}
+                for p in processed
+            ],
+        }
+        ensure_dir(run_root)
+        from src.utils.json_utils import save_json
+        save_json(run_root / "summary.json", summary)
+
+        for p in processed:
+            hero_summary = {
+                "hero_id": p["hero_id"],
+                "hero_type": "Activity",
+                "status": "success",
+                "matched_skeleton": f"matched/{p['hero_id']}.skel",
+                "matched_atlas": f"matched/{p['hero_id']}.atlas",
+                "matched_texture": f"matched/{p['hero_id']}.png",
+            }
+            save_json(activity_heroes_root / p["hero_id"] / "summary.json", hero_summary)
+
+    return result
+
+
+def ensure_dir(path: Path):
+    path.mkdir(parents=True, exist_ok=True)

@@ -93,6 +93,9 @@ async def startup():
     temp_preview_root = Path("./output/temp/texture_preview")
     temp_preview_root.mkdir(parents=True, exist_ok=True)
     app.mount("/output/temp/texture_preview", StaticFiles(directory=temp_preview_root), name="texture_preview")
+    activity_extract_root = Path("./output/temp/activity_extract")
+    activity_extract_root.mkdir(parents=True, exist_ok=True)
+    app.mount("/output/temp/activity_extract", StaticFiles(directory=activity_extract_root), name="activity_extract")
 
 
 class RunRequest(BaseModel):
@@ -965,6 +968,25 @@ async def api_texture_preview_list(activity_id: str):
         "image_count": len(images),
         "images": images,
     }
+
+class ActivityProcessRequest(BaseModel):
+    selected_stems: list[str] = []
+
+@app.get("/api/activities/{activity_id}/pack-files")
+async def api_activity_pack_files(activity_id: str):
+    from src.services.activity_extractor import list_activity_pack_files
+    config = get_config()
+    result = list_activity_pack_files(activity_id, config.output_root)
+    if "error" in result:
+        raise HTTPException(404, result["error"])
+    return result
+
+@app.post("/api/activities/{activity_id}/process-selected")
+async def api_activity_process_selected(activity_id: str, req: ActivityProcessRequest):
+    from src.services.activity_extractor import process_activity_selected
+    config = get_config()
+    result = process_activity_selected(activity_id, req.selected_stems, config, config.output_root)
+    return result
 
 if __name__ == "__main__":
     import uvicorn
