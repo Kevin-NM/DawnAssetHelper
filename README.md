@@ -182,3 +182,44 @@ AssetStudioModCLI <input_path> -o <output_path> -t tex2d,sprite,textasset,monobe
   ```bash
   powershell -ExecutionPolicy Bypass -File .\fix_bat_encoding.ps1
   ```
+
+## 活動分析
+
+DawnAssetHelper 支援自動偵測 `activities_packs_*.ab` 活動包，分析活動內的英雄資源。
+
+### 1. 資源索引（本地表）
+- 點擊「活動」頁籤 → 點擊「建立索引」拍攝當前 AB 目錄的 SHA256 快照
+- 遊戲更新後，再次點擊「新舊比對」即可偵測新增/修改/移除的 AB 檔案
+
+### 2. 活動偵測
+- 點擊「掃描活動」載入活動包列表
+- 系統會自動解析 `activities_packs_*.ab`，提取活動內的英雄 ID
+- 有獨立 AB 檔案的英雄顯示為綠色，僅在活動包內的顯示為灰色 `*`
+
+### 3. 活動包瀏覽器
+- 點擊「瀏覽活動包」展開活動包內的所有 Texture2D 圖片網格
+- 點擊圖片選取/取消（紫色邊框），支援全選/清除
+- 完整項目（有 skel+atlas+tex）正常顯示，缺少檔案的半透明標記
+- 點擊「匯出選取」自動匹配 skel/atlas/texture 並準備 GIF 匯出
+
+### 4. 自動匯出
+- 點擊「自動匯出」將活動內所有英雄送入完整的解包→匹配→GIF 匯出 pipeline
+- 匯出結果出現在 Library 的「活動」分類中
+
+### 5. 圖片預覽
+- 點擊「圖片預覽」解包活動相關 AB 的 Texture2D，快速瀏覽圖片內容
+
+## Web UI
+
+DawnAssetHelper 可透過 Web 介面操作（預設埠 8000）：
+
+```bash
+python server/app.py
+```
+
+或雙擊 `open.bat` 啟動。瀏覽器開啟 `http://127.0.0.1:8000`。
+
+- 支援 6 種語言（繁體中文、簡體中文、English、日本語、한국어、Русский）
+- 支援 20+ 種介面主題
+- 即時 WebSocket 日誌串流
+- 響應式設計，適配桌面與平板

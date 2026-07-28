@@ -1646,6 +1646,24 @@
         el.title = t(el.dataset.i18nTitle);
       });
       document.documentElement.lang = currentLang;
+      if (typeof renderActivities === 'function' && activitiesData.length) renderActivities();
+      if (typeof checkIndexStatus === 'function') checkIndexStatus();
+      Object.keys(activityHeroesCache).forEach(aid => {
+        if (typeof autoExtractActivityHeroes === 'function') {
+          const d = activityHeroesCache[aid];
+          if (d && d.hero_ids) {
+            const heroesEl = document.getElementById(`act-heroes-${aid}`);
+            if (heroesEl) {
+              heroesEl.innerHTML = d.hero_ids.slice(0, 30).map(h => {
+                const hasAb = d.hero_ab_files && d.hero_ab_files[h];
+                const color = hasAb ? 'var(--text-dim)' : 'var(--text-faint)';
+                const title = hasAb ? '' : t('activities.no_ab_files');
+                return `<span class="mono text-[11px] px-2 py-0.5 rounded" style="background:var(--bg-raised);color:${color}" title="${title}">${h}${hasAb ? '' : ' *'}</span>`;
+              }).join('');
+            }
+          }
+        }
+      });
     }
 
     function setLang(lang) {
@@ -1680,7 +1698,7 @@ function switchTab(name) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('hidden', c.id !== `tab-${name}`));
       if (name === 'library') loadLibrary();
       if (name === 'settings') loadConfig();
-      if (name === 'activities') { loadActivities(); checkIndexStatus(); }
+      if (name === 'activities') { checkIndexStatus(); }
     }
 
     // WebSocket log streaming
