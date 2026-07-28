@@ -474,6 +474,21 @@ async def api_run(req: RunRequest):
         scanner = HeroScanner(config.asset_bundle_folder)
         all_heroes = scanner.scan()
         heroes = [h for h in all_heroes if h.hero_id in req.hero_ids]
+        found_ids = {h.hero_id for h in heroes}
+        for hid in req.hero_ids:
+            if hid not in found_ids:
+                from src.models import HeroBundleGroup
+                from src.services.hero_scanner import parse_hero_number, classify_hero_type
+                heroes.append(HeroBundleGroup(
+                    hero_id=hid,
+                    hero_number=parse_hero_number(hid),
+                    hero_type=classify_hero_type(hid),
+                    variant_ids=[],
+                    bundle_files=[],
+                    file_count=0,
+                    total_size=0,
+                    status="Ready",
+                ))
     else:
         raise HTTPException(400, "No heroes selected")
 

@@ -2521,6 +2521,13 @@ function renderPackBrowser(activityId, data) {
         }
         selectedPackItems.clear();
         loadLibrary();
+
+        const heroIds = data.items.map(p => p.hero_id);
+        if (heroIds.length > 0) {
+          appendLog(`自動啟動 GIF 匯出 (${heroIds.length} 個項目)...`);
+          await api('/api/run', 'POST', {mode: 'gif_only', hero_ids: heroIds});
+          appendLog('GIF 匯出已啟動，請查看執行頁籤');
+        }
       } catch (e) {
         alert(e.message);
       }
