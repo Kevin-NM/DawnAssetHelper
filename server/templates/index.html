@@ -2744,6 +2744,8 @@ function renderPackBrowser(activityId, data) {
           action = `onclick="extractDiffActivityPack('${safeName}')" title="${t('diff.click_extract_pack')}"`;
         } else if (f.file_type === 'activity_spine') {
           action = `onclick="extractDiffSpine('${safeName}')" title="${t('diff.click_view')}"`;
+        } else {
+          action = `onclick="extractDiffOther('${safeName}')" title="${t('diff.click_extract')}"`;
         }
         html += `<div class="text-[11px] mono px-2 py-1 rounded flex items-center justify-between ${action ? 'cursor-pointer hover:bg-accent-muted' : ''}" style="background:var(--bg-raised)" ${action}>
           <span class="truncate mr-2" title="${f.filename}">${f.filename}</span>
@@ -2778,6 +2780,18 @@ function renderPackBrowser(activityId, data) {
 
     async function extractDiffSpine(filename) {
       appendLog(`Spine 檔案: ${filename}（請從活動包瀏覽器解包）`);
+    }
+
+    async function extractDiffOther(filename) {
+      if (!confirm(`解包 ${filename}？\n使用 AssetStudio 提取 Texture2D + TextAsset`)) return;
+      appendLog(`解包 ${filename}...`);
+      try {
+        const result = await api('/api/extract-file', 'POST', {filename: filename});
+        appendLog(`解包完成：${result.file_count || 0} 個檔案 → ${result.output_dir || ''}`);
+        if (result.image_count > 0) {
+          appendLog(`  包含 ${result.image_count} 張圖片，${result.text_count || 0} 個 TextAsset`);
+        }
+      } catch (e) { alert(e.message); }
     }
   </script>
 </body>

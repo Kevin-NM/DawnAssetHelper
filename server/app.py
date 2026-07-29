@@ -1017,6 +1017,47 @@ async def api_clean_activity_pack(activity_id: str):
         return {"status": "ok", "cleaned": str(pack_dir)}
     return {"status": "ok", "cleaned": None}
 
+class ExtractFileRequest(BaseModel):
+    filename: str = ""
+
+@app.post("/api/extract-file")
+async def api_extract_file(req: ExtractFileRequest):
+    import os as _os
+    from src.services.assetstudio_service import AssetStudioService
+    config = get_config()
+    ab_path = Path(config.asset_bundle_folder) / req.filename
+    if not ab_path.exists():
+        raise HTTPException(404, f"File not found: {req.filename}")
+
+    out_dir = Path(config.output_root) / "temp" / "diff_extract" / ab_path.stem
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    svc = AssetStudioService(config.assetstudio_path, config)
+    success, cmd, stdout, stderr = svc.extract_bundle(ab_path, out_dir, 120, include_types=True)
+
+    if not success:
+        raise HTTPException(500, f"Extraction failed: {stderr[:200]}")
+
+    img_count = 0
+    txt_count = 0
+    for root, dirs, files in _os.walk(out_dir):
+        for f in files:
+            if f.lower().endswith(('.png', '.jpg', '.jpeg', '.webp', '.tga')):
+                img_count += 1
+            elif f.lower().endswith(('.txt', '.json', '.bytes', '.prefab')):
+                txt_count += 1
+
+    return {
+        "status": "ok",
+        "filename": req.filename,
+        "output_dir": str(out_dir),
+        "file_count": img_count + txt_count,
+        "image_count": img_count,
+        "text_count": txt_count,
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000, ws="websockets")
