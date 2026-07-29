@@ -2446,6 +2446,7 @@ function switchTab(name) {
 
 function renderPackBrowser(activityId, data) {
       const browserEl = document.getElementById(`act-browser-${activityId}`);
+      const scrollTop = browserEl.querySelector('.overflow-y-auto')?.scrollTop || 0;
       const sizeClass = ZOOM_SIZES[packZoom] || 'h-16';
       let html = `<div class="border-t border-border pt-3 mt-2">`;
       html += `<div class="flex items-center justify-between mb-2 flex-wrap gap-2">`;
@@ -2459,7 +2460,7 @@ function renderPackBrowser(activityId, data) {
       html += `<button class="btn btn-primary text-[10px] px-2 py-0.5" onclick="processSelectedPackItems('${activityId}')">${t('activities.export_selected')}</button>`;
       html += `</div></div>`;
 
-      html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[600px] overflow-y-auto">`;
+      html += `<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2 max-h-[600px] overflow-y-auto" id="pack-grid-${activityId}">`;
       const items = data.items || [];
       items.forEach(item => {
         const stem = item.stem;
@@ -2475,6 +2476,8 @@ function renderPackBrowser(activityId, data) {
       });
       html += `</div></div>`;
       browserEl.innerHTML = html;
+      const grid = document.getElementById(`pack-grid-${activityId}`);
+      if (grid && scrollTop > 0) grid.scrollTop = scrollTop;
     }
 
     function changeZoom(delta) {
