@@ -61,9 +61,7 @@ def scan_activity_spine_files(ab_folder: str) -> dict[str, list[str]]:
 
 def extract_hero_ids_from_activity_text(text: str) -> list[str]:
     hero_ids = set()
-    for match in re.finditer(r"hero(\d+)", text, re.IGNORECASE):
-        hero_ids.add(f"hero{match.group(1)}")
-    for match in re.finditer(r"hero\d+_(\d+)", text, re.IGNORECASE):
+    for match in re.finditer(r"(?:^|[\\/])hero(\d+)", text, re.IGNORECASE):
         hero_ids.add(f"hero{match.group(1)}")
     return sorted(hero_ids)
 
