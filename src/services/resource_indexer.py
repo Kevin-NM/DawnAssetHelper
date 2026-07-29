@@ -42,6 +42,8 @@ def classify_file(filename: str) -> str:
         return "activity_spine"
     if re.match(r"^activities_packs_", filename):
         return "activity_pack"
+    if re.match(r"^activities_", filename):
+        return "activity_pack"
     return "other"
 
 

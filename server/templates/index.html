@@ -2656,7 +2656,6 @@ function renderPackBrowser(activityId, data) {
 
     async function compareResourceIndexes() {
       const statusEl = document.getElementById('index-status');
-      const contentEl = document.getElementById('diff-content');
       try {
         const indexes = await api('/api/resource-index');
         if (indexes.length < 2) {
@@ -2667,50 +2666,54 @@ function renderPackBrowser(activityId, data) {
         statusEl.classList.remove('hidden');
         statusEl.innerHTML = t('activities.compare_running');
         const data = await api('/api/resource-index/compare', 'POST', {old_folder: '', new_folder: ''});
+        lastDiffData = data;
+        diffFilterType = null;
+        renderDiffResults(data);
         const s = data.summary;
         statusEl.innerHTML = t('activities.compare_done', s.new_count, s.modified_count, s.removed_count, s.unchanged_count);
-
-        const typeLabel = {hero: t('diff.type_hero'), activity_spine: t('diff.type_spine'), activity_pack: t('diff.type_pack'), other: t('diff.type_other')};
-
-        let html = '';
-        if (data.new_files.length) {
-          html += renderDiffSection(t('diff.new_files'), data.new_files, '🟢', typeLabel, true);
-        }
-        if (data.modified_files.length) {
-          html += renderDiffSection(t('diff.modified_files'), data.modified_files, '🟡', typeLabel, false);
-        }
-        if (data.removed_files.length) {
-          html += renderDiffSection(t('diff.removed_files'), data.removed_files, '🔴', typeLabel, false);
-        }
-        if (!data.new_files.length && !data.modified_files.length && !data.removed_files.length) {
-          html = `<div class="text-sm text-[#636366] text-center py-8">${t('diff.no_changes')}</div>`;
-        }
-
-        const typeFilterHtml = ['hero', 'activity_spine', 'activity_pack', 'other'].map(t =>
-          `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="filterDiffType('${t}')">${typeLabel[t]}</button>`
-        ).join('');
-
-        contentEl.innerHTML = `
-          <div class="card p-4 mb-4">
-            <div class="flex items-center gap-4 mb-3">
-              <div class="stat"><div class="stat-value text-[#30a46c]">${s.new_count}</div><div class="stat-label">${t('diff.new_files')}</div></div>
-              <div class="stat"><div class="stat-value text-[#f5a623]">${s.modified_count}</div><div class="stat-label">${t('diff.modified_files')}</div></div>
-              <div class="stat"><div class="stat-value text-[#e5484d]">${s.removed_count}</div><div class="stat-label">${t('diff.removed_files')}</div></div>
-              <div class="stat"><div class="stat-value text-[#636366]">${s.unchanged_count}</div><div class="stat-label">${t('diff.unchanged_files')}</div></div>
-            </div>
-            <div class="text-[11px] text-[#636366]">${t('diff.old_index')}: ${data.old_index.created_at || ''} · ${t('diff.new_index')}: ${data.new_index.created_at || ''}</div>
-          </div>
-          ${html}
-        `;
       } catch (e) {
         statusEl.innerHTML = `❌ ${e.message}`;
       }
     }
 
+    function renderDiffResults(data) {
+      const contentEl = document.getElementById('diff-content');
+      const s = data.summary;
+      const typeLabel = {hero: t('diff.type_hero'), activity_spine: t('diff.type_spine'), activity_pack: t('diff.type_pack'), other: t('diff.type_other')};
+
+      let html = '';
+      if (data.new_files.length) {
+        html += renderDiffSection(t('diff.new_files'), data.new_files, '🟢', typeLabel, true);
+      }
+      if (data.modified_files.length) {
+        html += renderDiffSection(t('diff.modified_files'), data.modified_files, '🟡', typeLabel, false);
+      }
+      if (data.removed_files.length) {
+        html += renderDiffSection(t('diff.removed_files'), data.removed_files, '🔴', typeLabel, false);
+      }
+      if (!data.new_files.length && !data.modified_files.length && !data.removed_files.length) {
+        html = `<div class="text-sm text-[#636366] text-center py-8">${t('diff.no_changes')}</div>`;
+      }
+
+      contentEl.innerHTML = `
+        <div class="card p-4 mb-4">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="stat"><div class="stat-value text-[#30a46c]">${s.new_count}</div><div class="stat-label">${t('diff.new_files')}</div></div>
+            <div class="stat"><div class="stat-value text-[#f5a623]">${s.modified_count}</div><div class="stat-label">${t('diff.modified_files')}</div></div>
+            <div class="stat"><div class="stat-value text-[#e5484d]">${s.removed_count}</div><div class="stat-label">${t('diff.removed_files')}</div></div>
+            <div class="stat"><div class="stat-value text-[#636366]">${s.unchanged_count}</div><div class="stat-label">${t('diff.unchanged_files')}</div></div>
+          </div>
+          <div class="text-[11px] text-[#636366]">${t('diff.old_index')}: ${data.old_index.created_at || ''} · ${t('diff.new_index')}: ${data.new_index.created_at || ''}</div>
+        </div>
+        ${html}
+      `;
+    }
+
     let diffFilterType = null;
+    let lastDiffData = null;
     function filterDiffType(type) {
       diffFilterType = diffFilterType === type ? null : type;
-      compareResourceIndexes();
+      if (lastDiffData) renderDiffResults(lastDiffData);
     }
 
     function renderDiffSection(title, files, icon, typeLabel, isNew) {
@@ -2725,7 +2728,7 @@ function renderPackBrowser(activityId, data) {
           <div class="text-xs font-medium">${icon} ${title} (${filtered.length})</div>
           <div class="flex gap-1">${['hero','activity_spine','activity_pack','other'].map(t => {
             const count = files.filter(f => f.file_type === t).length;
-            return count ? `<span class="text-[10px] px-1.5 py-0.5 rounded ${diffFilterType === t ? 'bg-accent text-white' : ''}" style="background:var(--bg-raised);color:var(--text-dim)">${typeLabel[t]}:${count}</span>` : '';
+            return count ? `<span class="text-[10px] px-1.5 py-0.5 rounded cursor-pointer ${diffFilterType === t ? 'bg-accent text-white' : ''}" style="background:var(--bg-raised);color:var(--text-dim)" onclick="event.stopPropagation();filterDiffType('${t}')">${typeLabel[t]}:${count}</span>` : '';
           }).join('')}</div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 max-h-80 overflow-y-auto">`;
