@@ -590,7 +590,17 @@ class OrchestratorWorker(QThread):
         skel_file = matched_dir / f"{hero_id}.skel"
         if not skel_file.exists():
             skel_file = matched_dir / f"{hero_id}.json"
+        if not skel_file.exists():
+            skel_files = list(matched_dir.glob("*.skel")) + list(matched_dir.glob("*.json"))
+            if skel_files:
+                skel_file = skel_files[0]
+                logger.info(f"[SpineExporter] Found skeleton by glob: {skel_file.name}")
         atlas_file = matched_dir / f"{hero_id}.atlas"
+        if not atlas_file.exists():
+            atlas_files = list(matched_dir.glob("*.atlas"))
+            if atlas_files:
+                atlas_file = atlas_files[0]
+                logger.info(f"[SpineExporter] Found atlas by glob: {atlas_file.name}")
         if not skel_file.exists() or not atlas_file.exists():
             msg = f"Missing .skel or .atlas in {matched_dir}"
             logger.error(msg)

@@ -226,11 +226,11 @@ def process_activity_selected(
             errors.append(f"{stem}: texture not found")
             continue
 
-        shutil.copy2(tex_src, matched_dir / f"{hero_id}.png")
+        shutil.copy2(tex_src, matched_dir / f"{stem}.png")
         logger.info(f"[Activity] {stem}: copied texture")
 
         if skel_src.exists():
-            dest = matched_dir / f"{hero_id}.skel"
+            dest = matched_dir / f"{stem}.skel"
             from src.services.asset_matcher import strip_unity_skel_header
             stripped_ok = strip_unity_skel_header(skel_src, dest)
             if not stripped_ok:
@@ -242,7 +242,7 @@ def process_activity_selected(
             logger.warning(f"[Activity] {stem}: no skeleton file")
 
         if atlas_src.exists():
-            dest = matched_dir / f"{hero_id}.atlas"
+            dest = matched_dir / f"{stem}.atlas"
             shutil.copy2(atlas_src, dest)
             logger.info(f"[Activity] {stem}: copied atlas")
         else:
