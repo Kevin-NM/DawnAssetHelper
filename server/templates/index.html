@@ -1303,6 +1303,7 @@
         'diff.new_files': '新增檔案', 'diff.modified_files': '修改檔案',
         'diff.removed_files': '移除檔案', 'diff.unchanged_files': '未變更',
         'diff.no_changes': '無變更', 'diff.old_index': '舊索引', 'diff.new_index': '新索引',
+        'diff.need_two': '⚠️ 需要至少兩份索引才能比對。請先點擊「建立索引」建立第一份，遊戲更新後再次建立並比對。',
         'diff.type_hero': '英雄', 'diff.type_spine': '活動Spine', 'diff.type_pack': '活動包', 'diff.type_other': '其他',
       },
       'zh-CN': {
@@ -1382,6 +1383,7 @@
         'diff.new_files': '新增文件', 'diff.modified_files': '修改文件',
         'diff.removed_files': '移除文件', 'diff.unchanged_files': '未变更',
         'diff.no_changes': '无变更', 'diff.old_index': '旧索引', 'diff.new_index': '新索引',
+        'diff.need_two': '⚠️ 需要至少两份索引才能比对。请先点击「建立索引」建立第一份，游戏更新后再次建立并比对。',
         'diff.type_hero': '英雄', 'diff.type_spine': '活动Spine', 'diff.type_pack': '活动包', 'diff.type_other': '其他',
       },
       'en': {
@@ -1461,6 +1463,7 @@
         'diff.new_files': 'New', 'diff.modified_files': 'Modified',
         'diff.removed_files': 'Removed', 'diff.unchanged_files': 'Unchanged',
         'diff.no_changes': 'No changes', 'diff.old_index': 'Old Index', 'diff.new_index': 'New Index',
+        'diff.need_two': '⚠️ Need at least 2 indexes to compare. Click "Build Index" first, then build again after a game update and compare.',
         'diff.type_hero': 'Hero', 'diff.type_spine': 'ActivitySpine', 'diff.type_pack': 'Pack', 'diff.type_other': 'Other',
       },
       'ja': {
@@ -1540,6 +1543,7 @@
         'diff.new_files': '新規', 'diff.modified_files': '変更',
         'diff.removed_files': '削除', 'diff.unchanged_files': '不变',
         'diff.no_changes': '変更なし', 'diff.old_index': '旧', 'diff.new_index': '新',
+        'diff.need_two': '⚠️ 比較には2つ以上のインデックスが必要です。「構築」で初回作成後、更新後に再度構築して比較してください。',
         'diff.type_hero': '英雄', 'diff.type_spine': 'Spine', 'diff.type_pack': 'パック', 'diff.type_other': '他',
       },
       'ko': {
@@ -1619,6 +1623,7 @@
         'diff.new_files': '신규', 'diff.modified_files': '변경',
         'diff.removed_files': '삭제', 'diff.unchanged_files': '불변',
         'diff.no_changes': '변경 없음', 'diff.old_index': '구', 'diff.new_index': '신',
+        'diff.need_two': '⚠️ 비교하려면 2개 이상의 인덱스가 필요합니다. 「구축」으로 최초 생성 후 업데이트 시 다시 구축하여 비교하세요.',
         'diff.type_hero': '영웅', 'diff.type_spine': 'Spine', 'diff.type_pack': '팩', 'diff.type_other': '기타',
       },
       'ru': {
@@ -1698,6 +1703,7 @@
         'diff.new_files': 'Новые', 'diff.modified_files': 'Измен.',
         'diff.removed_files': 'Удал.', 'diff.unchanged_files': 'Без изм.',
         'diff.no_changes': 'Без изменений', 'diff.old_index': 'Старый', 'diff.new_index': 'Новый',
+        'diff.need_two': '⚠️ Нужно минимум 2 индекса. Создайте первый, затем после обновления создайте второй и сравните.',
         'diff.type_hero': 'Герой', 'diff.type_spine': 'Spine', 'diff.type_pack': 'Пакет', 'diff.type_other': 'Прочее',
       },
     };
@@ -2647,11 +2653,9 @@ function renderPackBrowser(activityId, data) {
       const contentEl = document.getElementById('diff-content');
       try {
         const indexes = await api('/api/resource-index');
-        if (indexes.length === 0) {
+        if (indexes.length < 2) {
           statusEl.classList.remove('hidden');
-          statusEl.innerHTML = '⚠️ ' + t('activities.index_no_index');
-          await buildResourceIndex();
-          statusEl.innerHTML += '<br>' + t('activities.index_first_built');
+          statusEl.innerHTML = t('diff.need_two');
           return;
         }
         statusEl.classList.remove('hidden');

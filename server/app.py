@@ -765,19 +765,23 @@ async def api_latest_index():
 
 @app.post("/api/resource-index/compare")
 async def api_compare_indexes(req: ResourceCompareRequest):
-    from src.services.resource_indexer import build_index, load_latest_index, diff_indexes
+    from src.services.resource_indexer import build_index, load_latest_index, load_index, list_indexes, diff_indexes
     config = get_config()
-    old_folder = req.old_folder or config.asset_bundle_folder
     new_folder = req.new_folder or config.asset_bundle_folder
-    if not old_folder or not Path(old_folder).exists():
-        raise HTTPException(400, "Old folder not valid")
     if not new_folder or not Path(new_folder).exists():
         raise HTTPException(400, "New folder not valid")
 
-    old_idx = load_latest_index(config.output_root)
-    if not old_idx:
-        old_idx = build_index(old_folder, config.output_root)
-    new_idx = build_index(new_folder, config.output_root)
+    indexes = list_indexes(config.output_root)
+    if len(indexes) >= 2:
+        idx_path = Path(config.output_root) / "resource_index" / indexes[0]["filename"]
+        prev_path = Path(config.output_root) / "resource_index" / indexes[1]["filename"]
+        old_idx = load_index(str(prev_path))
+        new_idx = load_index(str(idx_path))
+    else:
+        old_idx = load_latest_index(config.output_root)
+        if not old_idx:
+            old_idx = build_index(new_folder, config.output_root)
+        new_idx = build_index(new_folder, config.output_root)
 
     diff = diff_indexes(old_idx, new_idx)
     diff["old_index"] = {"folder": old_idx.folder, "created_at": old_idx.created_at}
