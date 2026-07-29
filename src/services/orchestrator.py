@@ -51,7 +51,12 @@ class OrchestratorWorker(QThread):
         runs = sorted([d for d in runs_dir.iterdir() if d.is_dir()], key=lambda x: x.name, reverse=True)
         for run in runs:
             matched = run / "heroes" / hero_id / "matched"
-            if matched.exists() and (matched / f"{hero_id}.atlas").exists() and (matched / f"{hero_id}.skel").exists() and any(matched.glob("*.png")):
+            if not matched.exists():
+                continue
+            has_atlas = (matched / f"{hero_id}.atlas").exists() or any(matched.glob("*.atlas"))
+            has_skel = (matched / f"{hero_id}.skel").exists() or (matched / f"{hero_id}.json").exists() or any(matched.glob("*.skel")) or any(matched.glob("*.json"))
+            has_png = any(matched.glob("*.png"))
+            if has_atlas and has_skel and has_png:
                 return matched
         return None
 
