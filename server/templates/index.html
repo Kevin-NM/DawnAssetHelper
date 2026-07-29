@@ -1305,6 +1305,7 @@
         'diff.no_changes': '無變更', 'diff.old_index': '舊索引', 'diff.new_index': '新索引',
         'diff.need_two': '⚠️ 需要至少兩份索引才能比對。請先點擊「建立索引」建立第一份，遊戲更新後再次建立並比對。',
         'diff.type_hero': '英雄', 'diff.type_spine': '活動Spine', 'diff.type_pack': '活動包', 'diff.type_other': '其他',
+        'diff.click_extract': '點擊解包此英雄', 'diff.click_extract_pack': '點擊解包此活動包', 'diff.click_view': '點擊查看',
       },
       'zh-CN': {
         'tab.library': '图鉴', 'tab.run': '执行', 'tab.settings': '设置',
@@ -1385,6 +1386,7 @@
         'diff.no_changes': '无变更', 'diff.old_index': '旧索引', 'diff.new_index': '新索引',
         'diff.need_two': '⚠️ 需要至少两份索引才能比对。请先点击「建立索引」建立第一份，游戏更新后再次建立并比对。',
         'diff.type_hero': '英雄', 'diff.type_spine': '活动Spine', 'diff.type_pack': '活动包', 'diff.type_other': '其他',
+        'diff.click_extract': '点击解包此英雄', 'diff.click_extract_pack': '点击解包此活动包', 'diff.click_view': '点击查看',
       },
       'en': {
         'tab.library': 'Library', 'tab.run': 'Run', 'tab.settings': 'Settings',
@@ -1465,6 +1467,7 @@
         'diff.no_changes': 'No changes', 'diff.old_index': 'Old Index', 'diff.new_index': 'New Index',
         'diff.need_two': '⚠️ Need at least 2 indexes to compare. Click "Build Index" first, then build again after a game update and compare.',
         'diff.type_hero': 'Hero', 'diff.type_spine': 'ActivitySpine', 'diff.type_pack': 'Pack', 'diff.type_other': 'Other',
+        'diff.click_extract': 'Click to extract hero', 'diff.click_extract_pack': 'Click to extract pack', 'diff.click_view': 'Click to view',
       },
       'ja': {
         'tab.library': '図鑑', 'tab.run': '実行', 'tab.settings': '設定',
@@ -1545,6 +1548,7 @@
         'diff.no_changes': '変更なし', 'diff.old_index': '旧', 'diff.new_index': '新',
         'diff.need_two': '⚠️ 比較には2つ以上のインデックスが必要です。「構築」で初回作成後、更新後に再度構築して比較してください。',
         'diff.type_hero': '英雄', 'diff.type_spine': 'Spine', 'diff.type_pack': 'パック', 'diff.type_other': '他',
+        'diff.click_extract': 'クリックで解凍', 'diff.click_extract_pack': 'クリックでパック解凍', 'diff.click_view': 'クリックで表示',
       },
       'ko': {
         'tab.library': '도감', 'tab.run': '실행', 'tab.settings': '설정',
@@ -1625,6 +1629,7 @@
         'diff.no_changes': '변경 없음', 'diff.old_index': '구', 'diff.new_index': '신',
         'diff.need_two': '⚠️ 비교하려면 2개 이상의 인덱스가 필요합니다. 「구축」으로 최초 생성 후 업데이트 시 다시 구축하여 비교하세요.',
         'diff.type_hero': '영웅', 'diff.type_spine': 'Spine', 'diff.type_pack': '팩', 'diff.type_other': '기타',
+        'diff.click_extract': '클릭하여 추출', 'diff.click_extract_pack': '클릭하여 팩 추출', 'diff.click_view': '클릭하여 보기',
       },
       'ru': {
         'tab.library': 'Библиотека', 'tab.run': 'Запуск', 'tab.settings': 'Настройки',
@@ -1705,6 +1710,7 @@
         'diff.no_changes': 'Без изменений', 'diff.old_index': 'Старый', 'diff.new_index': 'Новый',
         'diff.need_two': '⚠️ Нужно минимум 2 индекса. Создайте первый, затем после обновления создайте второй и сравните.',
         'diff.type_hero': 'Герой', 'diff.type_spine': 'Spine', 'diff.type_pack': 'Пакет', 'diff.type_other': 'Прочее',
+        'diff.click_extract': 'Нажмите для извлечения', 'diff.click_extract_pack': 'Нажмите для извлечения пакета', 'diff.click_view': 'Нажмите для просмотра',
       },
     };
 
@@ -2725,13 +2731,50 @@ function renderPackBrowser(activityId, data) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 max-h-80 overflow-y-auto">`;
       filtered.forEach(f => {
         const sizeMB = (f.size / 1048576).toFixed(2);
-        html += `<div class="text-[11px] mono px-2 py-1 rounded flex items-center justify-between" style="background:var(--bg-raised)">
+        const safeName = f.filename.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        let action = '';
+        if (f.file_type === 'hero') {
+          const heroMatch = f.filename.match(/hero(\d+)/);
+          const hid = heroMatch ? 'hero' + heroMatch[1] : '';
+          action = hid ? `onclick="extractDiffHero('${hid}')" title="${t('diff.click_extract')}"` : '';
+        } else if (f.file_type === 'activity_pack') {
+          action = `onclick="extractDiffActivityPack('${safeName}')" title="${t('diff.click_extract_pack')}"`;
+        } else if (f.file_type === 'activity_spine') {
+          action = `onclick="extractDiffSpine('${safeName}')" title="${t('diff.click_view')}"`;
+        }
+        html += `<div class="text-[11px] mono px-2 py-1 rounded flex items-center justify-between ${action ? 'cursor-pointer hover:bg-accent-muted' : ''}" style="background:var(--bg-raised)" ${action}>
           <span class="truncate mr-2" title="${f.filename}">${f.filename}</span>
           <span class="text-[#636366] flex-shrink-0">${sizeMB} MB</span>
         </div>`;
       });
       html += `</div></div>`;
       return html;
+    }
+
+    async function extractDiffHero(heroId) {
+      if (!confirm(`解包英雄 ${heroId}？（解包 → 匹配 → GIF）`)) return;
+      try {
+        appendLog(`解包英雄 ${heroId}...`);
+        await api('/api/run', 'POST', {mode: 'extract_and_gif', hero_ids: [heroId]});
+        appendLog(`${heroId} 已啟動`);
+        switchTab('run');
+      } catch (e) { alert(e.message); }
+    }
+
+    async function extractDiffActivityPack(filename) {
+      const aid = filename.match(/activities_packs_(\d+)/)?.[1];
+      if (!aid) { alert('無法解析活動 ID'); return; }
+      if (!confirm(`解包活動包 ${aid}？`)) return;
+      try {
+        appendLog(`解包活動包 ${aid}...`);
+        await api(`/api/activities/${aid}`, 'GET');
+        appendLog(`活動 ${aid} 解包完成`);
+        switchTab('activities');
+      } catch (e) { alert(e.message); }
+    }
+
+    async function extractDiffSpine(filename) {
+      appendLog(`Spine 檔案: ${filename}（請從活動包瀏覽器解包）`);
     }
   </script>
 </body>
