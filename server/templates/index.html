@@ -704,6 +704,12 @@
         <span data-i18n="tab.activities">活動</span>
       </span>
     </div>
+    <div class="tab" data-tab="diff" onclick="switchTab('diff')">
+      <span class="flex items-center gap-1.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><polyline points="17 7 12 2 7 7"/><polyline points="7 17 12 22 17 17"/></svg>
+        <span data-i18n="tab.diff">資源比對</span>
+      </span>
+    </div>
     <div class="tab" data-tab="settings" onclick="switchTab('settings')">
       <span class="flex items-center gap-1.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
@@ -836,20 +842,36 @@
             <h2 class="text-base font-semibold" data-i18n="activities.title">活動分析</h2>
             <p class="text-xs text-[#636366] mt-0.5" data-i18n="activities.desc">自動偵測 activities_packs 並提取活動英雄資源</p>
           </div>
+          <button class="btn btn-secondary" onclick="loadActivities()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span data-i18n="activities.scan">掃描活動</span>
+          </button>
+        </div>
+
+        <div id="activities-content" class="space-y-6">
+          <div class="text-[#636366] text-sm text-center py-12" data-i18n="activities.scan_hint">點擊「掃描活動」載入活動列表</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resource Diff Tab -->
+    <div id="tab-diff" class="tab-content hidden h-full overflow-y-auto p-6">
+      <div class="max-w-6xl mx-auto">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="text-base font-semibold" data-i18n="diff.title">資源比對</h2>
+            <p class="text-xs text-[#636366] mt-0.5" data-i18n="diff.desc">建立 AB 目錄索引，比對新舊版本差異</p>
+          </div>
           <div class="flex gap-2">
-            <button class="btn btn-ghost text-xs" onclick="buildResourceIndex()" id="btn-build-index" data-i18n="activities.build_index">建立索引</button>
-            <button class="btn btn-ghost text-xs" onclick="compareResourceIndexes()" id="btn-compare-index" data-i18n="activities.compare">新舊比對</button>
-            <button class="btn btn-secondary" onclick="loadActivities()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              <span data-i18n="activities.scan">掃描活動</span>
-            </button>
+            <button class="btn btn-secondary" onclick="buildResourceIndex()" id="btn-build-index" data-i18n="diff.build_index">建立索引</button>
+            <button class="btn btn-primary" onclick="compareResourceIndexes()" id="btn-compare-index" data-i18n="diff.compare">新舊比對</button>
           </div>
         </div>
 
         <div id="index-status" class="card p-3 mb-4 text-xs text-[#636366] hidden"></div>
 
-        <div id="activities-content" class="space-y-6">
-          <div class="text-[#636366] text-sm text-center py-12" data-i18n="activities.scan_hint">點擊「掃描活動」載入活動列表</div>
+        <div id="diff-content" class="space-y-4">
+          <div class="text-[#636366] text-sm text-center py-12" data-i18n="diff.hint">點擊「建立索引」拍攝當前 AB 目錄快照，遊戲更新後點擊「新舊比對」查看變更</div>
         </div>
       </div>
     </div>
@@ -1237,6 +1259,7 @@
         'settings.spinepro.loop': '永久循環', 'settings.spinepro.restore': '還原預設',
         'settings.save': '儲存設定', 'settings.saved': '已儲存',
         'tab.activities': '活動',
+        'tab.diff': '資源比對',
         'activities.title': '活動分析', 'activities.desc': '自動偵測 activities_packs 並提取活動英雄資源',
         'activities.scan': '掃描活動', 'activities.scan_hint': '點擊「掃描活動」載入活動列表',
         'activities.build_index': '建立索引', 'activities.compare': '新舊比對',
@@ -1274,6 +1297,13 @@
         'activities.clean_pack': '清理',
         'activities.extract_pack': '解包活動包',
         'activities.extract_pack_confirm': '確定要解包活動 {0} 的活動包？\n（約需 1-2 分鐘，解包後可瀏覽圖片與匯出）',
+        'diff.title': '資源比對', 'diff.desc': '建立 AB 目錄索引，比對新舊版本差異',
+        'diff.build_index': '建立索引', 'diff.compare': '新舊比對',
+        'diff.hint': '點擊「建立索引」拍攝當前 AB 目錄快照，遊戲更新後點擊「新舊比對」查看變更',
+        'diff.new_files': '新增檔案', 'diff.modified_files': '修改檔案',
+        'diff.removed_files': '移除檔案', 'diff.unchanged_files': '未變更',
+        'diff.no_changes': '無變更', 'diff.old_index': '舊索引', 'diff.new_index': '新索引',
+        'diff.type_hero': '英雄', 'diff.type_spine': '活動Spine', 'diff.type_pack': '活動包', 'diff.type_other': '其他',
       },
       'zh-CN': {
         'tab.library': '图鉴', 'tab.run': '执行', 'tab.settings': '设置',
@@ -1308,6 +1338,7 @@
         'settings.spinepro.loop': '永久循环', 'settings.spinepro.restore': '还原默认',
         'settings.save': '保存设置', 'settings.saved': '已保存',
         'tab.activities': '活动',
+        'tab.diff': '资源比对',
         'activities.title': '活动分析', 'activities.desc': '自动侦测 activities_packs 并提取活动英雄资源',
         'activities.scan': '扫描活动', 'activities.scan_hint': '点击「扫描活动」加载活动列表',
         'activities.build_index': '建立索引', 'activities.compare': '新旧比对',
@@ -1345,6 +1376,13 @@
         'activities.clean_pack': '清理',
         'activities.extract_pack': '解包活动包',
         'activities.extract_pack_confirm': '确定要解包活动 {0} 的活动包？\n（约需 1-2 分钟，解包后可浏览图片与导出）',
+        'diff.title': '资源比对', 'diff.desc': '建立 AB 目录索引，比对新旧版本差异',
+        'diff.build_index': '建立索引', 'diff.compare': '新旧比对',
+        'diff.hint': '点击「建立索引」拍摄当前 AB 目录快照，游戏更新后点击「新旧比对」查看变更',
+        'diff.new_files': '新增文件', 'diff.modified_files': '修改文件',
+        'diff.removed_files': '移除文件', 'diff.unchanged_files': '未变更',
+        'diff.no_changes': '无变更', 'diff.old_index': '旧索引', 'diff.new_index': '新索引',
+        'diff.type_hero': '英雄', 'diff.type_spine': '活动Spine', 'diff.type_pack': '活动包', 'diff.type_other': '其他',
       },
       'en': {
         'tab.library': 'Library', 'tab.run': 'Run', 'tab.settings': 'Settings',
@@ -1379,6 +1417,7 @@
         'settings.spinepro.loop': 'Loop Forever', 'settings.spinepro.restore': 'Restore Defaults',
         'settings.save': 'Save Settings', 'settings.saved': 'Saved',
         'tab.activities': 'Activity',
+        'tab.diff': 'Diff',
         'activities.title': 'Activity Analysis', 'activities.desc': 'Auto-detect activities_packs and extract activity hero assets',
         'activities.scan': 'Scan Activities', 'activities.scan_hint': 'Click "Scan Activities" to load the activity list',
         'activities.build_index': 'Build Index', 'activities.compare': 'Compare',
@@ -1416,6 +1455,13 @@
         'activities.clean_pack': 'Clean',
         'activities.extract_pack': 'Extract Pack',
         'activities.extract_pack_confirm': 'Extract activity pack for {0}?\n(~1-2 min, then browse images and export)',
+        'diff.title': 'Resource Diff', 'diff.desc': 'Build AB directory index and compare versions',
+        'diff.build_index': 'Build Index', 'diff.compare': 'Compare',
+        'diff.hint': 'Click "Build Index" to snapshot the current AB directory, then "Compare" after a game update',
+        'diff.new_files': 'New', 'diff.modified_files': 'Modified',
+        'diff.removed_files': 'Removed', 'diff.unchanged_files': 'Unchanged',
+        'diff.no_changes': 'No changes', 'diff.old_index': 'Old Index', 'diff.new_index': 'New Index',
+        'diff.type_hero': 'Hero', 'diff.type_spine': 'ActivitySpine', 'diff.type_pack': 'Pack', 'diff.type_other': 'Other',
       },
       'ja': {
         'tab.library': '図鑑', 'tab.run': '実行', 'tab.settings': '設定',
@@ -1450,6 +1496,7 @@
         'settings.spinepro.loop': 'ループ再生', 'settings.spinepro.restore': 'デフォルトに戻す',
         'settings.save': '設定を保存', 'settings.saved': '保存済み',
         'tab.activities': 'アクティビティ',
+        'tab.diff': '差分',
         'activities.title': 'アクティビティ分析', 'activities.desc': 'activities_packs を自動検出しアクティビティヒーローを抽出',
         'activities.scan': 'アクティビティスキャン', 'activities.scan_hint': '「アクティビティスキャン」をクリックしてリストを読み込む',
         'activities.build_index': 'インデックス構築', 'activities.compare': '比較',
@@ -1487,6 +1534,13 @@
         'activities.clean_pack': '削除',
         'activities.extract_pack': 'パック解凍',
         'activities.extract_pack_confirm': 'アクティビティ {0} のパックを解凍しますか？\n（約1-2分、解凍後は画像閲覧とエクスポートが可能）',
+        'diff.title': 'リソース差分', 'diff.desc': 'AB ディレクトリのインデックスを作成しバージョン比較',
+        'diff.build_index': '構築', 'diff.compare': '比較',
+        'diff.hint': '「構築」でスナップショット作成、「比較」で更新後の変更を確認',
+        'diff.new_files': '新規', 'diff.modified_files': '変更',
+        'diff.removed_files': '削除', 'diff.unchanged_files': '不变',
+        'diff.no_changes': '変更なし', 'diff.old_index': '旧', 'diff.new_index': '新',
+        'diff.type_hero': '英雄', 'diff.type_spine': 'Spine', 'diff.type_pack': 'パック', 'diff.type_other': '他',
       },
       'ko': {
         'tab.library': '도감', 'tab.run': '실행', 'tab.settings': '설정',
@@ -1521,6 +1575,7 @@
         'settings.spinepro.loop': '루프 재생', 'settings.spinepro.restore': '기본값 복원',
         'settings.save': '설정 저장', 'settings.saved': '저장됨',
         'tab.activities': '액티비티',
+        'tab.diff': '비교',
         'activities.title': '액티비티 분석', 'activities.desc': 'activities_packs 자동 감지 및 액티비티 영웅 추출',
         'activities.scan': '액티비티 스캔', 'activities.scan_hint': '「액티비티 스캔」을 클릭하여 목록 로드',
         'activities.build_index': '인덱스 구축', 'activities.compare': '비교',
@@ -1558,6 +1613,13 @@
         'activities.clean_pack': '삭제',
         'activities.extract_pack': '팩 추출',
         'activities.extract_pack_confirm': '액티비티 {0} 팩을 추출하시겠습니까?\n(약 1-2분, 추출 후 이미지 탐색 및 내보내기 가능)',
+        'diff.title': '리소스 비교', 'diff.desc': 'AB 디렉토리 인덱스 구축 및 버전 비교',
+        'diff.build_index': '구축', 'diff.compare': '비교',
+        'diff.hint': '「구축」으로 스냅샷 생성, 업데이트 후 「비교」로 변경 확인',
+        'diff.new_files': '신규', 'diff.modified_files': '변경',
+        'diff.removed_files': '삭제', 'diff.unchanged_files': '불변',
+        'diff.no_changes': '변경 없음', 'diff.old_index': '구', 'diff.new_index': '신',
+        'diff.type_hero': '영웅', 'diff.type_spine': 'Spine', 'diff.type_pack': '팩', 'diff.type_other': '기타',
       },
       'ru': {
         'tab.library': 'Библиотека', 'tab.run': 'Запуск', 'tab.settings': 'Настройки',
@@ -1592,6 +1654,7 @@
         'settings.spinepro.loop': 'Зациклить', 'settings.spinepro.restore': 'Сбросить',
         'settings.save': 'Сохранить', 'settings.saved': 'Сохранено',
         'tab.activities': 'Активность',
+        'tab.diff': 'Сравнение',
         'activities.title': 'Анализ активностей', 'activities.desc': 'Автоопределение activities_packs и извлечение героев',
         'activities.scan': 'Сканировать', 'activities.scan_hint': 'Нажмите «Сканировать» для загрузки списка',
         'activities.build_index': 'Индекс', 'activities.compare': 'Сравнить',
@@ -1629,6 +1692,13 @@
         'activities.clean_pack': 'Очистить',
         'activities.extract_pack': 'Извлечь пакет',
         'activities.extract_pack_confirm': 'Извлечь пакет активности {0}?\n(~1-2 мин, затем просмотр и экспорт)',
+        'diff.title': 'Сравнение', 'diff.desc': 'Индекс AB и сравнение версий',
+        'diff.build_index': 'Индекс', 'diff.compare': 'Сравнить',
+        'diff.hint': 'Создайте снимок «Индекс», затем «Сравнить» после обновления',
+        'diff.new_files': 'Новые', 'diff.modified_files': 'Измен.',
+        'diff.removed_files': 'Удал.', 'diff.unchanged_files': 'Без изм.',
+        'diff.no_changes': 'Без изменений', 'diff.old_index': 'Старый', 'diff.new_index': 'Новый',
+        'diff.type_hero': 'Герой', 'diff.type_spine': 'Spine', 'diff.type_pack': 'Пакет', 'diff.type_other': 'Прочее',
       },
     };
 
@@ -1716,7 +1786,8 @@ function switchTab(name) {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('hidden', c.id !== `tab-${name}`));
       if (name === 'library') loadLibrary();
       if (name === 'settings') loadConfig();
-      if (name === 'activities') { checkIndexStatus(); }
+      if (name === 'activities') { loadActivities(); }
+      if (name === 'diff') { checkIndexStatus(); }
     }
 
     // WebSocket log streaming
@@ -2573,6 +2644,7 @@ function renderPackBrowser(activityId, data) {
 
     async function compareResourceIndexes() {
       const statusEl = document.getElementById('index-status');
+      const contentEl = document.getElementById('diff-content');
       try {
         const indexes = await api('/api/resource-index');
         if (indexes.length === 0) {
@@ -2584,28 +2656,78 @@ function renderPackBrowser(activityId, data) {
         }
         statusEl.classList.remove('hidden');
         statusEl.innerHTML = t('activities.compare_running');
-        appendLog(t('activities.compare_running'));
         const data = await api('/api/resource-index/compare', 'POST', {old_folder: '', new_folder: ''});
         const s = data.summary;
         statusEl.innerHTML = t('activities.compare_done', s.new_count, s.modified_count, s.removed_count, s.unchanged_count);
-        appendLog(`比對完成：新增 ${s.new_count} 修改 ${s.modified_count} 移除 ${s.removed_count} 未變 ${s.unchanged_count}`);
-        if (s.new_count > 0 || s.modified_count > 0) {
-          statusEl.innerHTML += '<br>' + t('activities.compare_changes');
-        }
+
+        const typeLabel = {hero: t('diff.type_hero'), activity_spine: t('diff.type_spine'), activity_pack: t('diff.type_pack'), other: t('diff.type_other')};
+
+        let html = '';
         if (data.new_files.length) {
-          appendLog(`--- 新增檔案 (${data.new_files.length}) ---`);
-          data.new_files.slice(0, 20).forEach(f => appendLog(`  + ${f.filename} [${f.file_type}]`));
-          if (data.new_files.length > 20) appendLog(`  ... 共 ${data.new_files.length} 個`);
+          html += renderDiffSection(t('diff.new_files'), data.new_files, '🟢', typeLabel, true);
         }
         if (data.modified_files.length) {
-          appendLog(`--- 修改檔案 (${data.modified_files.length}) ---`);
-          data.modified_files.slice(0, 10).forEach(f => appendLog(`  ~ ${f.filename}`));
-          if (data.modified_files.length > 10) appendLog(`  ... 共 ${data.modified_files.length} 個`);
+          html += renderDiffSection(t('diff.modified_files'), data.modified_files, '🟡', typeLabel, false);
         }
+        if (data.removed_files.length) {
+          html += renderDiffSection(t('diff.removed_files'), data.removed_files, '🔴', typeLabel, false);
+        }
+        if (!data.new_files.length && !data.modified_files.length && !data.removed_files.length) {
+          html = `<div class="text-sm text-[#636366] text-center py-8">${t('diff.no_changes')}</div>`;
+        }
+
+        const typeFilterHtml = ['hero', 'activity_spine', 'activity_pack', 'other'].map(t =>
+          `<button class="btn btn-ghost text-[10px] px-2 py-0.5" onclick="filterDiffType('${t}')">${typeLabel[t]}</button>`
+        ).join('');
+
+        contentEl.innerHTML = `
+          <div class="card p-4 mb-4">
+            <div class="flex items-center gap-4 mb-3">
+              <div class="stat"><div class="stat-value text-[#30a46c]">${s.new_count}</div><div class="stat-label">${t('diff.new_files')}</div></div>
+              <div class="stat"><div class="stat-value text-[#f5a623]">${s.modified_count}</div><div class="stat-label">${t('diff.modified_files')}</div></div>
+              <div class="stat"><div class="stat-value text-[#e5484d]">${s.removed_count}</div><div class="stat-label">${t('diff.removed_files')}</div></div>
+              <div class="stat"><div class="stat-value text-[#636366]">${s.unchanged_count}</div><div class="stat-label">${t('diff.unchanged_files')}</div></div>
+            </div>
+            <div class="text-[11px] text-[#636366]">${t('diff.old_index')}: ${data.old_index.created_at || ''} · ${t('diff.new_index')}: ${data.new_index.created_at || ''}</div>
+          </div>
+          ${html}
+        `;
       } catch (e) {
-        statusEl.innerHTML = `❌ 比對失敗: ${e.message}`;
-        appendLog(`比對失敗: ${e.message}`);
+        statusEl.innerHTML = `❌ ${e.message}`;
       }
+    }
+
+    let diffFilterType = null;
+    function filterDiffType(type) {
+      diffFilterType = diffFilterType === type ? null : type;
+      compareResourceIndexes();
+    }
+
+    function renderDiffSection(title, files, icon, typeLabel, isNew) {
+      let filtered = files;
+      if (diffFilterType) {
+        filtered = files.filter(f => f.file_type === diffFilterType);
+      }
+      if (!filtered.length) return '';
+
+      let html = `<div class="card p-3 mb-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="text-xs font-medium">${icon} ${title} (${filtered.length})</div>
+          <div class="flex gap-1">${['hero','activity_spine','activity_pack','other'].map(t => {
+            const count = files.filter(f => f.file_type === t).length;
+            return count ? `<span class="text-[10px] px-1.5 py-0.5 rounded ${diffFilterType === t ? 'bg-accent text-white' : ''}" style="background:var(--bg-raised);color:var(--text-dim)">${typeLabel[t]}:${count}</span>` : '';
+          }).join('')}</div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 max-h-80 overflow-y-auto">`;
+      filtered.forEach(f => {
+        const sizeMB = (f.size / 1048576).toFixed(2);
+        html += `<div class="text-[11px] mono px-2 py-1 rounded flex items-center justify-between" style="background:var(--bg-raised)">
+          <span class="truncate mr-2" title="${f.filename}">${f.filename}</span>
+          <span class="text-[#636366] flex-shrink-0">${sizeMB} MB</span>
+        </div>`;
+      });
+      html += `</div></div>`;
+      return html;
     }
   </script>
 </body>
