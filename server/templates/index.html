@@ -745,7 +745,7 @@
       <div class="absolute right-0 top-0 bottom-0 w-full max-w-2xl bg-surface border-l border-border overflow-y-auto fade-in">
         <div class="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-border" style="background:var(--bg-surface);">
           <div class="flex items-center gap-3">
-            <button class="btn btn-ghost px-2" onclick="closeHeroDetail()">
+            <button class="btn btn-ghost px-2" aria-label="關閉詳情" onclick="closeHeroDetail()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <div>
@@ -1846,8 +1846,8 @@ function switchTab(name) {
     function renderHeroCards(heroes, typeLabel) {
       return heroes.map(h => `
         <div class="card hero-card fade-in cursor-pointer" onclick="openHeroDetail('${h.hero_id}')">
-          ${h.thumbnail
-            ? `<img class="hero-thumb" src="${h.thumbnail}" alt="${h.hero_id}" onerror="this.outerHTML='<div class=\\'hero-thumb-placeholder\\'>${h.hero_number || h.hero_id.replace('hero','')}</div>'">`
+          ${h.static_thumbnail
+            ? `<img class="hero-thumb" loading="lazy" decoding="async" src="${h.static_thumbnail}" alt="${h.hero_id}" onerror="this.outerHTML='<div class=\\'hero-thumb-placeholder\\'>${h.hero_number || h.hero_id.replace('hero','')}</div>'">`
             : `<div class="hero-thumb-placeholder">${h.hero_number || h.hero_id.replace('hero','')}</div>`
           }
           <div class="flex-1 min-w-0">
@@ -1861,6 +1861,7 @@ function switchTab(name) {
               <span class="text-[11px] text-[#636366]">${h.status === 'success' ? t('library.status.success') : h.status === 'failed' ? t('library.status.failed') : h.status}</span>
             </div>
           </div>
+          <button class="btn btn-danger text-xs px-2 py-1" title="刪除此英雄" aria-label="刪除 ${h.hero_id}" onclick="event.stopPropagation();deleteLibraryHero('${h.hero_id}')">刪除</button>
         </div>
       `).join('');
     }
@@ -1915,16 +1916,21 @@ function switchTab(name) {
 
     // Hero Detail
     let currentDetailHero = null;
+    let detailRequestId = 0;
 
     async function openHeroDetail(heroId) {
+      closeHeroDetail();
+      const requestId = detailRequestId;
       currentDetailHero = heroId;
       const overlay = document.getElementById('hero-detail-overlay');
       overlay.classList.remove('hidden');
 
       document.getElementById('detail-hero-id').textContent = heroId;
+      document.getElementById('detail-body').textContent = t('library.loading');
 
       try {
         const h = await api(`/api/library/${heroId}`);
+        if (currentDetailHero !== heroId || requestId !== detailRequestId) return;
 
         const typeLabel = {Original: t('library.type.original'), Collab: t('library.type.collab'), Skin: 'Skin', Activity: t('library.type.activity'), Unknown: t('library.type.unknown')};
         document.getElementById('detail-type-badge').textContent = typeLabel[h.hero_type] || h.hero_type;
@@ -1933,8 +1939,8 @@ function switchTab(name) {
 
         let bodyHtml = '';
 
-        if (h.thumbnail) {
-          bodyHtml += `<div class="mb-4"><img src="${h.thumbnail}" class="w-32 h-32 object-contain rounded-lg border border-border" style="background:var(--bg-overlay)"></div>`;
+        if (h.static_thumbnail) {
+          bodyHtml += `<div class="mb-4"><img src="${h.static_thumbnail}" class="w-32 h-32 object-contain rounded-lg border border-border" style="background:var(--bg-overlay)"></div>`;
         }
 
         // Action buttons
@@ -1946,6 +1952,7 @@ function switchTab(name) {
         }
         bodyHtml += `<button class="btn btn-secondary text-xs" onclick="cleanHero('${heroId}')">🧹 清理暫存</button>`;
         bodyHtml += `<button class="btn btn-ghost text-xs" onclick="openFolder('')">📁 開啟資料夾</button>`;
+        bodyHtml += `<button class="btn btn-danger text-xs" onclick="deleteLibraryHero('${heroId}')">刪除此英雄</button>`;
         bodyHtml += `</div>`;
 
         const allGifs = [];
@@ -1963,14 +1970,14 @@ function switchTab(name) {
           bodyHtml += `<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">`;
           allGifs.forEach((g, i) => {
             bodyHtml += `
-              <div class="card p-2 text-center gif-card" data-idx="${i}">
+              <button type="button" class="card p-2 text-center gif-card cursor-pointer" data-src="${g.url}" onclick="toggleGifPlayback(this)" aria-label="播放或停止 ${g.name}" aria-pressed="false">
                 <div class="relative w-full h-24 rounded mb-1 overflow-hidden" style="background:var(--bg-overlay)">
-                  <canvas class="gif-static w-full h-full object-contain" data-src="${g.url}" width="200" height="100"></canvas>
-                  <img src="${g.url}" class="gif-anim w-full h-full object-contain absolute inset-0 opacity-0 transition-opacity duration-150">
+                  <img src="${g.thumbnail || ''}" loading="lazy" decoding="async" class="gif-static w-full h-full object-contain">
                 </div>
                 <div class="text-[11px] text-[#636366] truncate">${g.variant ? g.variant + '/' : ''}${g.name}</div>
                 <div class="text-[10px] text-[#4a4a50]">${(g.size/1024).toFixed(0)} KB</div>
-              </div>`;
+                <div class="gif-play-label text-[11px] mt-1">▶ 點擊播放</div>
+              </button>`;
           });
           bodyHtml += `</div>`;
         } else {
@@ -1999,41 +2006,55 @@ function switchTab(name) {
 
         document.getElementById('detail-body').innerHTML = bodyHtml;
 
-        // Render static GIF thumbnails via canvas
-        requestAnimationFrame(() => {
-          document.querySelectorAll('.gif-static[data-src]').forEach(canvas => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => {
-              canvas.width = canvas.offsetWidth * 2 || 200;
-              canvas.height = canvas.offsetHeight * 2 || 100;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            };
-            img.src = canvas.dataset.src;
-          });
-          // Hover events
-          document.querySelectorAll('.gif-card').forEach(card => {
-            const canvas = card.querySelector('.gif-static');
-            const animImg = card.querySelector('.gif-anim');
-            card.addEventListener('mouseenter', () => {
-              if (canvas) canvas.style.opacity = '0';
-              if (animImg) animImg.style.opacity = '1';
-            });
-            card.addEventListener('mouseleave', () => {
-              if (canvas) canvas.style.opacity = '1';
-              if (animImg) animImg.style.opacity = '0';
-            });
-          });
-        });
       } catch (e) {
+        if (currentDetailHero !== heroId || requestId !== detailRequestId) return;
         document.getElementById('detail-body').innerHTML = `<div class="text-red-400 text-sm">${e.message}</div>`;
       }
     }
 
     function closeHeroDetail() {
+      detailRequestId++;
+      document.querySelectorAll('#detail-body .gif-card').forEach(stopGifPlayback);
+      document.getElementById('detail-body').replaceChildren();
       document.getElementById('hero-detail-overlay').classList.add('hidden');
       currentDetailHero = null;
+    }
+
+    function stopGifPlayback(card) {
+      const animation = card.querySelector('.gif-anim');
+      if (animation) {
+        animation.onerror = null;
+        animation.removeAttribute('src');
+        animation.remove();
+      }
+      card.setAttribute('aria-pressed', 'false');
+      card.querySelector('.gif-play-label').textContent = '▶ 點擊播放';
+    }
+
+    function toggleGifPlayback(card) {
+      const wasPlaying = card.getAttribute('aria-pressed') === 'true';
+      document.querySelectorAll('#detail-body .gif-card').forEach(stopGifPlayback);
+      if (wasPlaying) return;
+      const animation = document.createElement('img');
+      animation.className = 'gif-anim w-full h-full object-contain absolute inset-0';
+      animation.onerror = () => stopGifPlayback(card);
+      animation.src = card.dataset.src;
+      card.querySelector('.relative').appendChild(animation);
+      card.setAttribute('aria-pressed', 'true');
+      card.querySelector('.gif-play-label').textContent = '■ 點擊停止';
+    }
+
+    const deletingLibraryHeroes = new Set();
+    async function deleteLibraryHero(heroId) {
+      if (deletingLibraryHeroes.has(heroId)) return;
+      if (!confirm(`確定刪除 ${heroId}？\n圖鑑及所有同角色執行記錄會移至 output/trash 回收區，原始 AssetBundle 不受影響。`)) return;
+      deletingLibraryHeroes.add(heroId);
+      if (currentDetailHero === heroId) closeHeroDetail();
+      try {
+        await api(`/api/library/${encodeURIComponent(heroId)}`, 'DELETE');
+        await loadLibrary();
+      } catch (e) { alert(e.message); }
+      finally { deletingLibraryHeroes.delete(heroId); }
     }
 
     async function saveHeroMeta() {

@@ -8,11 +8,13 @@ import subprocess
 import datetime
 from pathlib import Path
 from typing import Optional
+from urllib.parse import quote, unquote
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from pydantic import BaseModel
+from PIL import Image
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -31,6 +33,7 @@ from src.services.hero_scanner import HeroScanner
 from src.services.orchestrator import OrchestratorWorker
 from src.services.logger_service import logger
 from src.utils.json_utils import load_json, save_json
+from src.services.library_service import static_thumbnail, trash_hero
 
 app = FastAPI(title="DawnAssetHelper")
 
@@ -246,6 +249,45 @@ async def api_library():
     return {"library": library, "runs": runs}
 
 
+def _thumbnail_url(gif_url: str | None) -> str | None:
+    if not gif_url or not gif_url.startswith("/output/"):
+        return None
+    source = unquote(gif_url[len("/output/"):])
+    root = Path(get_config().output_root)
+    try:
+        version = (root / source).stat().st_mtime_ns
+    except OSError:
+        return None
+    return f"/api/library-thumbnail?source={quote(source, safe='')}&v={version}"
+
+
+@app.get("/api/library-thumbnail")
+def api_library_thumbnail(source: str):
+    try:
+        thumbnail = static_thumbnail(Path(get_config().output_root), source)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc))
+    except (OSError, Image.DecompressionBombError) as exc:
+        raise HTTPException(422, "Cannot decode GIF preview") from exc
+    return FileResponse(thumbnail, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
+
+
+@app.delete("/api/library/{hero_id}")
+async def api_delete_library_hero(hero_id: str):
+    if worker_status["running"] or (active_worker and active_worker.isRunning()):
+        raise HTTPException(409, "Cannot delete heroes while a job is running")
+    try:
+        return trash_hero(Path(get_config().output_root), hero_id)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except FileNotFoundError as exc:
+        raise HTTPException(404, str(exc))
+    except OSError as exc:
+        raise HTTPException(409, "Files are in use or cannot be moved; deletion was cancelled") from exc
+
+
 def _parse_number(hero_id: str) -> int | None:
     import re
     m = re.search(r'hero(\d+)', hero_id)
@@ -350,6 +392,7 @@ def _build_library_entry(hero_id: str, hero_dir: Path) -> dict | None:
         "gif_files": gifs,
         "has_matched": has_matched,
         "thumbnail": thumbnail,
+        "static_thumbnail": _thumbnail_url(thumbnail),
     }
 
 
@@ -423,6 +466,7 @@ async def api_library_detail(hero_id: str):
                 entry.setdefault("gif_files_detail", []).append({
                     "name": f.name,
                     "url": f"{gif_base}/{f.name}",
+                    "thumbnail": _thumbnail_url(f"{gif_base}/{f.name}"),
                     "size": f.stat().st_size,
                 })
         for subdir in sorted(gif_dir.iterdir()):
@@ -433,6 +477,7 @@ async def api_library_detail(hero_id: str):
                         files.append({
                             "name": f.name,
                             "url": f"{gif_base}/{subdir.name}/{f.name}",
+                            "thumbnail": _thumbnail_url(f"{gif_base}/{subdir.name}/{f.name}"),
                             "size": f.stat().st_size,
                         })
                 if files:
