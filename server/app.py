@@ -6,6 +6,7 @@ import queue
 import shutil
 import subprocess
 import datetime
+import re
 from pathlib import Path
 from typing import Optional
 from urllib.parse import quote, unquote
@@ -33,7 +34,8 @@ from src.services.hero_scanner import HeroScanner
 from src.services.orchestrator import OrchestratorWorker
 from src.services.logger_service import logger
 from src.utils.json_utils import load_json, save_json
-from src.services.library_service import static_thumbnail, trash_hero
+from src.services.library_service import (static_thumbnail, trash_hero, library_root_for,
+    migrate_library, clean_generated, clean_intermediates, validate_tree, _contained)
 
 app = FastAPI(title="DawnAssetHelper")
 
@@ -68,6 +70,39 @@ def get_config() -> AppConfig:
             if hasattr(config, k):
                 setattr(config, k, v)
     return config
+
+
+def _prepare_library(config):
+    library = library_root_for(config)
+    if not worker_status["running"] and not (active_worker and active_worker.isRunning()):
+        try:
+            migrate_library(Path(config.output_root), library)
+        except (ValueError, OSError) as exc:
+            raise HTTPException(409, f"Library migration failed; original data preserved: {exc}") from exc
+    return library
+
+
+def _media_base(hero_dir):
+    config = get_config()
+    library = library_root_for(config)
+    path = hero_dir.resolve()
+    if path.is_relative_to(library):
+        return "/library/" + quote(path.relative_to(library).as_posix(), safe="/")
+    return "/output/" + quote(path.relative_to(Path(config.output_root).resolve()).as_posix(), safe="/")
+
+
+@app.get("/library/{source:path}")
+def api_saved_media(source: str):
+    root = library_root_for(get_config())
+    try:
+        path = _contained(root, root / source)
+        if path.suffix.lower() not in (".gif", ".png") or not path.is_file():
+            raise FileNotFoundError()
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except FileNotFoundError:
+        raise HTTPException(404, "Image not found")
+    return FileResponse(path)
 
 
 # Background task: broadcast log_queue to all WebSocket clients
@@ -162,6 +197,7 @@ async def api_save_config(req: ConfigUpdate):
         "gif_auto_trim_bad_leading_frames": config.gif_auto_trim_bad_leading_frames,
         "gif_trim_max_scan_frames": config.gif_trim_max_scan_frames,
         "output_root": config.output_root,
+        "library_root": config.library_root,
         "timeout_minutes": config.timeout_minutes,
         "assetstudio_export_types": config.assetstudio_export_types,
         "assetstudio_cli_profile": config.assetstudio_cli_profile,
@@ -215,13 +251,17 @@ async def api_library():
     library = []
     runs = []
 
-    heroes_dir = root / "heroes"
-    if heroes_dir.exists():
+    saved_root = _prepare_library(config)
+    seen = set()
+    for heroes_dir in (saved_root / "heroes", root / "heroes"):
+        if not heroes_dir.exists():
+            continue
         for hero_dir in sorted(heroes_dir.iterdir()):
-            if not hero_dir.is_dir():
+            if not hero_dir.is_dir() or hero_dir.name in seen:
                 continue
             entry = _build_library_entry(hero_dir.name, hero_dir)
             if entry:
+                seen.add(hero_dir.name)
                 entry["section"] = "library"
                 library.append(entry)
 
@@ -249,29 +289,48 @@ async def api_library():
     return {"library": library, "runs": runs}
 
 
-def _thumbnail_url(gif_url: str | None) -> str | None:
-    if not gif_url or not gif_url.startswith("/output/"):
+def _thumbnail_url(gif_url: str | None, full_size=False) -> str | None:
+    if not gif_url:
         return None
-    source = unquote(gif_url[len("/output/"):])
-    root = Path(get_config().output_root)
+    area = "library" if gif_url.startswith("/library/") else "output"
+    prefix = f"/{area}/"
+    if not gif_url.startswith(prefix):
+        return None
+    source = unquote(gif_url[len(prefix):])
+    config = get_config()
+    root = library_root_for(config) if area == "library" else Path(config.output_root)
     try:
         version = (root / source).stat().st_mtime_ns
     except OSError:
         return None
-    return f"/api/library-thumbnail?source={quote(source, safe='')}&v={version}"
+    route = "library-image" if full_size else "library-thumbnail"
+    return f"/api/{route}?source={quote(source, safe='')}&area={area}&v={version}"
 
 
-@app.get("/api/library-thumbnail")
-def api_library_thumbnail(source: str):
+def _png_response(source, area, full_size):
+    config = get_config()
+    if area not in ("output", "library"):
+        raise HTTPException(400, "Invalid media area")
+    root = library_root_for(config) if area == "library" else Path(config.output_root)
     try:
-        thumbnail = static_thumbnail(Path(get_config().output_root), source)
+        image = static_thumbnail(root, source, full_size=full_size)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     except FileNotFoundError as exc:
         raise HTTPException(404, str(exc))
     except (OSError, Image.DecompressionBombError) as exc:
         raise HTTPException(422, "Cannot decode GIF preview") from exc
-    return FileResponse(thumbnail, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
+    return FileResponse(image, media_type="image/png", headers={"Cache-Control": "private, max-age=86400"})
+
+
+@app.get("/api/library-thumbnail")
+def api_library_thumbnail(source: str, area: str = "output"):
+    return _png_response(source, area, False)
+
+
+@app.get("/api/library-image")
+def api_library_image(source: str, area: str = "output"):
+    return _png_response(source, area, True)
 
 
 @app.delete("/api/library/{hero_id}")
@@ -279,7 +338,8 @@ async def api_delete_library_hero(hero_id: str):
     if worker_status["running"] or (active_worker and active_worker.isRunning()):
         raise HTTPException(409, "Cannot delete heroes while a job is running")
     try:
-        return trash_hero(Path(get_config().output_root), hero_id)
+        config = get_config()
+        return trash_hero(Path(config.output_root), hero_id, library_root_for(config))
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     except FileNotFoundError as exc:
@@ -306,21 +366,11 @@ def _classify_type(hero_id: str) -> str:
 
 
 def _build_library_entry(hero_id: str, hero_dir: Path) -> dict | None:
-    gif_dir = hero_dir / "gif"
+    gif_dir = _hero_gif_dir(hero_id, hero_dir)
     matched_dir = hero_dir / "matched"
     summary_file = hero_dir / "summary.json"
 
-    # Determine URL base based on path
-    # Library: output/heroes/hero_id  |  Runs: output/runs/<ts>/heroes/hero_id
-    is_library = hero_dir.parent.name == "heroes" and "runs" not in hero_dir.parts
-    if is_library:
-        url_base = f"/output/heroes/{hero_id}/gif"
-    else:
-        # Find the timestamp directory between "runs" and "heroes"
-        parts = hero_dir.parts
-        runs_idx = next((i for i, p in enumerate(parts) if p == "runs"), None)
-        ts = parts[runs_idx + 1] if runs_idx is not None and runs_idx + 1 < len(parts) else "unknown"
-        url_base = f"/output/runs/{ts}/heroes/{hero_id}/gif"
+    url_base = _media_base(gif_dir.parent) + "/gif"
 
     gifs = []
     thumbnail = None
@@ -329,14 +379,13 @@ def _build_library_entry(hero_id: str, hero_dir: Path) -> dict | None:
         if gifs:
             thumbnail = f"{url_base}/{gifs[0]}"
 
-    if not thumbnail:
-        for subdir in sorted(gif_dir.iterdir()) if gif_dir.exists() else []:
-            if subdir.is_dir():
-                sub_gifs = [f.name for f in sorted(subdir.glob("*.gif")) if not f.name.endswith(".original.gif")]
-                if sub_gifs:
+    for subdir in sorted(gif_dir.iterdir()) if gif_dir.exists() else []:
+        if subdir.is_dir():
+            sub_gifs = [f.name for f in sorted(subdir.glob("*.gif")) if not f.name.endswith(".original.gif")]
+            if sub_gifs:
+                if not thumbnail:
                     thumbnail = f"{url_base}/{subdir.name}/{sub_gifs[0]}"
-                    gifs.extend(sub_gifs)
-                    break
+                gifs.extend(sub_gifs)
 
     has_matched = (matched_dir / f"{hero_id}.skel").exists() or (matched_dir / f"{hero_id}.json").exists()
 
@@ -346,39 +395,6 @@ def _build_library_entry(hero_id: str, hero_dir: Path) -> dict | None:
             summary = json.loads(summary_file.read_text(encoding="utf-8"))
         except:
             pass
-
-    if not thumbnail:
-        output_root_path = Path("output")
-        # Check library first
-        lib_gif = output_root_path / "heroes" / hero_id / "gif"
-        if lib_gif.exists():
-            lib_gifs = [f.name for f in sorted(lib_gif.glob("*.gif")) if not f.name.endswith(".original.gif")]
-            if lib_gifs:
-                thumbnail = f"/output/heroes/{hero_id}/gif/{lib_gifs[0]}"
-            else:
-                for subdir in sorted(lib_gif.iterdir()):
-                    if subdir.is_dir():
-                        sub_gifs = [f.name for f in sorted(subdir.glob("*.gif")) if not f.name.endswith(".original.gif")]
-                        if sub_gifs:
-                            thumbnail = f"/output/heroes/{hero_id}/gif/{subdir.name}/{sub_gifs[0]}"
-                            break
-
-        if not thumbnail:
-            runs_dir = output_root_path / "runs"
-            if runs_dir.exists():
-                for run_dir in sorted(runs_dir.iterdir(), reverse=True):
-                    candidate = run_dir / "heroes" / hero_id / "gif"
-                    if candidate.exists():
-                        run_gifs = [f.name for f in sorted(candidate.glob("*.gif")) if not f.name.endswith(".original.gif")]
-                        if run_gifs:
-                            thumbnail = f"/output/runs/{run_dir.name}/heroes/{hero_id}/gif/{run_gifs[0]}"
-                            break
-                    for subdir in sorted(candidate.iterdir()) if candidate.exists() else []:
-                        if subdir.is_dir():
-                            sub_gifs = [f.name for f in sorted(subdir.glob("*.gif")) if not f.name.endswith(".original.gif")]
-                            if sub_gifs:
-                                thumbnail = f"/output/runs/{run_dir.name}/heroes/{hero_id}/gif/{subdir.name}/{sub_gifs[0]}"
-                                break
 
     meta = _load_hero_metadata().get(hero_id, {})
 
@@ -394,6 +410,20 @@ def _build_library_entry(hero_id: str, hero_dir: Path) -> dict | None:
         "thumbnail": thumbnail,
         "static_thumbnail": _thumbnail_url(thumbnail),
     }
+
+
+def _hero_gif_dir(hero_id: str, hero_dir: Path) -> Path:
+    """Keep earlier successful exports visible after a later matched-only run."""
+    config = get_config()
+    output = Path(config.output_root)
+    candidates = [hero_dir / "gif", library_root_for(config) / "heroes" / hero_id / "gif", output / "heroes" / hero_id / "gif"]
+    runs = output / "runs"
+    if runs.is_dir():
+        candidates.extend(run / "heroes" / hero_id / "gif" for run in sorted(runs.iterdir(), reverse=True) if run.is_dir())
+    for candidate in candidates:
+        if candidate.is_dir() and any(not f.name.endswith(".original.gif") for f in candidate.rglob("*.gif")):
+            return candidate
+    return hero_dir / "gif"
 
 
 class HeroMetaUpdate(BaseModel):
@@ -425,13 +455,16 @@ async def api_library_detail(hero_id: str):
     if config.assetstudio_use_absolute_output_path:
         root = root.resolve()
 
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", hero_id):
+        raise HTTPException(400, "Invalid hero ID")
+    saved_root = _prepare_library(config)
     hero_dir = None
     section = "library"
-    heroes_dir = root / "heroes"
-    if heroes_dir.exists():
+    for heroes_dir in (saved_root / "heroes", root / "heroes"):
         candidate = heroes_dir / hero_id
-        if candidate.exists():
+        if candidate.is_dir():
             hero_dir = candidate
+            break
 
     if not hero_dir:
         section = "runs"
@@ -452,13 +485,12 @@ async def api_library_detail(hero_id: str):
     entry["hero_name"] = meta.get("hero_name", "")
     entry["hero_type"] = meta.get("hero_type", entry.get("hero_type", "Unknown"))
 
-    gif_dir = hero_dir / "gif"
+    gif_dir = _hero_gif_dir(hero_id, hero_dir)
     variant_gifs = {}
 
-    if section == "library":
-        gif_base = f"/output/heroes/{hero_id}/gif"
-    else:
-        gif_base = f"/output/runs/{hero_dir.parent.parent.name}/heroes/{hero_id}/gif"
+    gif_base = _media_base(gif_dir.parent) + "/gif"
+    entry["folder_path"] = str(hero_dir.resolve())
+    entry["main_image"] = _thumbnail_url(entry.get("thumbnail"), full_size=True)
 
     if gif_dir.exists():
         for f in sorted(gif_dir.glob("*.gif")):
@@ -467,6 +499,7 @@ async def api_library_detail(hero_id: str):
                     "name": f.name,
                     "url": f"{gif_base}/{f.name}",
                     "thumbnail": _thumbnail_url(f"{gif_base}/{f.name}"),
+                    "image": _thumbnail_url(f"{gif_base}/{f.name}", full_size=True),
                     "size": f.stat().st_size,
                 })
         for subdir in sorted(gif_dir.iterdir()):
@@ -478,6 +511,7 @@ async def api_library_detail(hero_id: str):
                             "name": f.name,
                             "url": f"{gif_base}/{subdir.name}/{f.name}",
                             "thumbnail": _thumbnail_url(f"{gif_base}/{subdir.name}/{f.name}"),
+                            "image": _thumbnail_url(f"{gif_base}/{subdir.name}/{f.name}", full_size=True),
                             "size": f.stat().st_size,
                         })
                 if files:
@@ -629,6 +663,8 @@ async def api_open_folder(req: dict):
 
 @app.post("/api/library/{hero_id}/promote")
 async def api_promote_hero(hero_id: str):
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", hero_id):
+        raise HTTPException(400, "Invalid hero ID")
     config = get_config()
     root = Path(config.output_root)
     if config.assetstudio_use_absolute_output_path:
@@ -646,94 +682,80 @@ async def api_promote_hero(hero_id: str):
     if not src_dir:
         raise HTTPException(404, "Hero not found in runs")
 
-    dest_dir = root / "heroes" / hero_id
-    dest_dir.mkdir(parents=True, exist_ok=True)
-
+    if worker_status["running"] or (active_worker and active_worker.isRunning()):
+        raise HTTPException(409, "Cannot save heroes while a job is running")
+    library = _prepare_library(config)
+    try:
+        validate_tree(root.resolve(), src_dir)
+        dest_dir = validate_tree(library, library / "heroes" / hero_id)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    # Copy the complete saved payload first; a failed copy must not publish a partial hero.
+    import uuid
+    staging = _contained(library, library / "temp" / f".saving_{hero_id}_{uuid.uuid4().hex}")
+    previous = _contained(library, library / "versions" / f"{hero_id}_{uuid.uuid4().hex}")
     promoted = []
-
-    matched_src = src_dir / "matched"
-    if matched_src.exists():
-        matched_dest = dest_dir / "matched"
-        if matched_dest.exists():
-            shutil.rmtree(matched_dest)
-        shutil.copytree(matched_src, matched_dest)
-        promoted.append("matched")
-
-    gif_src = src_dir / "gif"
-    if gif_src.exists():
-        gif_dest = dest_dir / "gif"
-        if gif_dest.exists():
-            shutil.rmtree(gif_dest)
-        shutil.copytree(gif_src, gif_dest)
-        promoted.append("gif")
-
-    summary_src = src_dir / "summary.json"
-    if summary_src.exists():
-        shutil.copy2(summary_src, dest_dir / "summary.json")
-        promoted.append("summary.json")
-
-    spine_src = src_dir / "spine_ready"
-    if spine_src.exists():
-        spine_dest = dest_dir / "spine_ready"
-        if spine_dest.exists():
-            shutil.rmtree(spine_dest)
-        shutil.copytree(spine_src, spine_dest)
-        promoted.append("spine_ready")
+    try:
+        staging.mkdir(parents=True)
+        for name in ("matched", "gif", "spine_ready", "images", "summary.json"):
+            source = src_dir / name
+            if source.is_dir():
+                shutil.copytree(source, staging / name)
+                promoted.append(name)
+            elif source.is_file():
+                shutil.copy2(source, staging / name)
+                promoted.append(name)
+        if dest_dir.exists():
+            previous.parent.mkdir(parents=True, exist_ok=True)
+            dest_dir.rename(previous)
+        try:
+            staging.rename(dest_dir)
+        except OSError:
+            if previous.exists():
+                previous.rename(dest_dir)
+            raise
+    except OSError as exc:
+        raise HTTPException(409, "Cannot save hero; existing Library data preserved") from exc
+    finally:
+        if staging.exists():
+            shutil.rmtree(validate_tree(library, staging))
 
     return {"status": "ok", "promoted": promoted, "dest": str(dest_dir)}
 
 
+def _clean_intermediates(hero_id=None):
+    if worker_status["running"] or (active_worker and active_worker.isRunning()):
+        raise HTTPException(409, "Cannot clean output while a job is running")
+    try:
+        return clean_intermediates(Path(get_config().output_root), hero_id)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except OSError as exc:
+        raise HTTPException(409, "Some temporary files are in use; saved Library is preserved") from exc
+
+
 @app.post("/api/library/{hero_id}/clean")
 async def api_clean_hero(hero_id: str):
-    config = get_config()
-    root = Path(config.output_root)
-    if config.assetstudio_use_absolute_output_path:
-        root = root.resolve()
-
-    removed = []
-    runs_dir = root / "runs"
-    if runs_dir.exists():
-        for run_dir in runs_dir.iterdir():
-            hero_dir = run_dir / "heroes" / hero_id
-            if hero_dir.exists():
-                raw_export = hero_dir / "raw_export"
-                if raw_export.exists():
-                    shutil.rmtree(raw_export)
-                    removed.append(f"{run_dir.name}/raw_export")
-                diagnostics = hero_dir / "diagnostics"
-                if diagnostics.exists():
-                    shutil.rmtree(diagnostics)
-                    removed.append(f"{run_dir.name}/diagnostics")
-
-    return {"status": "ok", "removed": removed}
+    return {"status": "ok", "removed": _clean_intermediates(hero_id)}
 
 
 @app.post("/api/clean-temp")
 async def api_clean_temp():
+    removed = _clean_intermediates()
+    return {"status": "ok", "cleaned_runs": sorted({path.split("/")[1] for path in removed})}
+
+
+@app.post("/api/clean-generated")
+async def api_clean_generated():
+    if worker_status["running"] or (active_worker and active_worker.isRunning()):
+        raise HTTPException(409, "Cannot clean output while a job is running")
     config = get_config()
-    root = Path(config.output_root)
-    if config.assetstudio_use_absolute_output_path:
-        root = root.resolve()
-
-    removed = []
-    runs_dir = root / "runs"
-    if runs_dir.exists():
-        for run_dir in runs_dir.iterdir():
-            heroes_dir = run_dir / "heroes"
-            if not heroes_dir.exists():
-                continue
-            for hero_dir in heroes_dir.iterdir():
-                if not hero_dir.is_dir():
-                    continue
-                raw_export = hero_dir / "raw_export"
-                if raw_export.exists():
-                    shutil.rmtree(raw_export)
-                diagnostics = hero_dir / "diagnostics"
-                if diagnostics.exists():
-                    shutil.rmtree(diagnostics)
-            removed.append(run_dir.name)
-
-    return {"status": "ok", "cleaned_runs": removed}
+    try:
+        return clean_generated(Path(config.output_root), library_root_for(config))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except OSError as exc:
+        raise HTTPException(409, "Some generated files could not be cleaned; saved Library is preserved") from exc
 
 
 @app.delete("/api/runs/{run_id}")

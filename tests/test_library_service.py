@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from PIL import Image
-from src.services.library_service import resolve_gif, static_thumbnail, trash_hero
+from src.services.library_service import resolve_gif, static_thumbnail, trash_hero, migrate_library, clean_generated, clean_intermediates
 
 
 class LibraryServiceTests(unittest.TestCase):
@@ -43,6 +43,87 @@ class LibraryServiceTests(unittest.TestCase):
         stat = gif.stat()
         os.utime(gif, ns=(stat.st_atime_ns, stat.st_mtime_ns + 1000000))
         self.assertNotEqual(before, static_thumbnail(self.root, source))
+
+    def test_full_image_preserves_dimensions_transparency_and_edges(self):
+        gif = self.root / "heroes/hero1/gif/idle.gif"
+        gif.parent.mkdir(parents=True)
+        image = Image.new("RGBA", (400, 800), (0, 0, 0, 0))
+        image.putpixel((200, 0), (255, 0, 0, 255))
+        image.putpixel((200, 799), (255, 0, 0, 255))
+        image.save(gif, transparency=0)
+        full = static_thumbnail(self.root, "heroes/hero1/gif/idle.gif", full_size=True)
+        with Image.open(full) as png:
+            self.assertEqual(png.size, (400, 800))
+            self.assertEqual(png.getpixel((0, 0))[3], 0)
+            self.assertEqual(png.getpixel((200, 0))[3], 255)
+            self.assertEqual(png.getpixel((200, 799))[3], 255)
+
+    def test_migration_cleanup_idempotence_conflicts_and_run_fallback(self):
+        output = self.root / "output"
+        saved = self.root / "library"
+        legacy = output / "heroes/hero1"
+        legacy.mkdir(parents=True)
+        (legacy / "summary.json").write_text('{"status":"saved"}')
+        gif = output / "runs/run1/heroes/hero1/gif/idle.gif"
+        gif.parent.mkdir(parents=True)
+        Image.new("RGBA", (10, 20), "red").save(gif)
+        (output / "temp").mkdir()
+        (output / "resource_index").mkdir()
+        self.assertEqual(migrate_library(output, saved)["moved"], ["hero1"])
+        self.assertEqual(migrate_library(output, saved)["moved"], [])
+        permanent = saved / "heroes/hero1/gif/idle.gif"
+        self.assertEqual(permanent.read_bytes(), gif.read_bytes())
+        legacy.mkdir()
+        (legacy / "keep.txt").write_text("conflict")
+        self.assertEqual(migrate_library(output, saved)["conflicts"], ["hero1"])
+        clean_generated(output, saved)
+        self.assertTrue(permanent.is_file())
+        self.assertTrue((legacy / "keep.txt").is_file())
+        self.assertTrue((output / "resource_index").is_dir())
+        self.assertFalse((output / "runs").exists())
+        self.assertFalse((output / "temp").exists())
+        self.assertEqual(clean_generated(output, saved)["removed"], [])
+
+    def test_cleanup_rejects_overlapping_roots(self):
+        self.make_gif()
+        with self.assertRaises(ValueError):
+            clean_generated(self.root, self.root / "library")
+        self.assertTrue((self.root / "heroes/hero1/gif/idle.gif").is_file())
+
+    def test_failed_fallback_copy_blocks_cleanup_and_can_retry(self):
+        output, saved = self.root / "output", self.root / "library"
+        hero = saved / "heroes/hero1"
+        hero.mkdir(parents=True)
+        gif = output / "runs/run1/heroes/hero1/gif/idle.gif"
+        gif.parent.mkdir(parents=True)
+        Image.new("RGBA", (10, 20), "red").save(gif)
+        def incomplete_copy(source, destination):
+            destination.mkdir()
+            (destination / "idle.gif").write_bytes(b"partial")
+            raise OSError("disk full")
+        with patch("src.services.library_service.shutil.copytree", incomplete_copy):
+            with self.assertRaises(OSError):
+                clean_generated(output, saved)
+        self.assertTrue(gif.is_file())
+        self.assertFalse((hero / "gif/idle.gif").exists())
+        self.assertEqual(list(hero.glob(".gif_migration_*")), [])
+        clean_generated(output, saved)
+        with Image.open(hero / "gif/idle.gif") as image:
+            self.assertEqual(image.size, (10, 20))
+
+    def test_intermediate_cleanup_preserves_saved_and_run_gifs(self):
+        self.make_gif()
+        run_gif = self.make_gif("runs/run1/heroes/hero1/gif/idle.gif")
+        for name in ("raw_export", "diagnostics"):
+            directory = run_gif.parent.parent / name
+            directory.mkdir()
+            (directory / "scratch.txt").write_text("temporary")
+        removed = clean_intermediates(self.root, "hero1")
+        self.assertEqual(len(removed), 2)
+        self.assertTrue(run_gif.is_file())
+        self.assertTrue((self.root / "heroes/hero1/gif/idle.gif").is_file())
+        with self.assertRaises(ValueError):
+            clean_intermediates(self.root, "../hero1")
 
     def test_invalid_paths_cannot_read_or_move_outside_output(self):
         for source in ("../secret.gif", str(self.root / "secret.gif"), "temp/secret.gif", "heroes/hero1/gif/atlas.png"):

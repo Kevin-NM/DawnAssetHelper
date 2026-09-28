@@ -45,6 +45,10 @@ class OrchestratorWorker(QThread):
             self.finished.emit(self.run_summary)
             
     def _find_latest_matched_dir(self, output_root: Path, hero_id: str) -> Path | None:
+        from src.services.library_service import library_root_for
+        saved = library_root_for(self.config) / "heroes" / hero_id / "matched"
+        if saved.exists() and any(saved.rglob("*.atlas")) and any(saved.rglob("*.png")) and (any(saved.rglob("*.skel")) or any(saved.rglob("*.json"))):
+            return saved
         runs_dir = output_root / "runs"
         if not runs_dir.exists(): return None
         
@@ -1193,6 +1197,10 @@ If the atlas or texture is not found in Spine, make sure the .atlas and .png fil
         return {"status": "success", "items": results}
 
     def _find_latest_gif_dir(self, output_root: Path, hero_id: str) -> Path | None:
+        from src.services.library_service import library_root_for
+        saved = library_root_for(self.config) / "heroes" / hero_id / "gif"
+        if saved.exists() and any(saved.rglob("*.gif")):
+            return saved
         direct = output_root / "heroes" / hero_id / "gif"
         if direct.exists() and any(direct.glob("*.gif")):
             return direct

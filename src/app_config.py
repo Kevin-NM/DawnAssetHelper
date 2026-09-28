@@ -25,6 +25,7 @@ class AppConfig:
     gif_spinepro_preset_path: str = "config/spine_pro_gif_export.json"
     gif_spinepro_preset: dict | None = None
     output_root: str = "./output"
+    library_root: str = "./library"
     timeout_minutes: int = 30
     assetstudio_export_types: list[str] = field(default_factory=lambda: [
         "tex2d",

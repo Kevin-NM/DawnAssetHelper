@@ -733,6 +733,7 @@
             <span data-i18n="library.refresh">重新整理</span>
           </button>
           <button class="btn btn-danger text-xs" onclick="cleanAllTemp()">🧹 清理暫存</button>
+            <button class="btn btn-danger" onclick="cleanGenerated()">清理執行資料</button>
         </div>
       </div>
       <div id="library-grid">
@@ -1845,7 +1846,7 @@ function switchTab(name) {
     // Library
     function renderHeroCards(heroes, typeLabel) {
       return heroes.map(h => `
-        <div class="card hero-card fade-in cursor-pointer" onclick="openHeroDetail('${h.hero_id}')">
+        <div class="card hero-card fade-in cursor-pointer" role="button" tabindex="0" aria-label="開啟 ${h.hero_id} 詳情" onclick="openHeroDetail('${h.hero_id}')" onkeydown="if(event.target===this && (event.key==='Enter' || event.key===' ')){event.preventDefault();openHeroDetail('${h.hero_id}');}">
           ${h.static_thumbnail
             ? `<img class="hero-thumb" loading="lazy" decoding="async" src="${h.static_thumbnail}" alt="${h.hero_id}" onerror="this.outerHTML='<div class=\\'hero-thumb-placeholder\\'>${h.hero_number || h.hero_id.replace('hero','')}</div>'">`
             : `<div class="hero-thumb-placeholder">${h.hero_number || h.hero_id.replace('hero','')}</div>`
@@ -1939,10 +1940,6 @@ function switchTab(name) {
 
         let bodyHtml = '';
 
-        if (h.static_thumbnail) {
-          bodyHtml += `<div class="mb-4"><img src="${h.static_thumbnail}" class="w-32 h-32 object-contain rounded-lg border border-border" style="background:var(--bg-overlay)"></div>`;
-        }
-
         // Action buttons
         bodyHtml += `<div class="flex flex-wrap gap-2 mb-5">`;
         if (h.section === 'runs') {
@@ -1965,20 +1962,34 @@ function switchTab(name) {
           }
         }
 
-        if (allGifs.length) {
-          bodyHtml += `<h3 class="text-sm font-medium mb-3">GIF (${allGifs.length})</h3>`;
+        if (allGifs.length || h.main_image) {
+          bodyHtml += `<h3 class="text-sm font-medium mb-2">圖片 · GIF (${allGifs.length})</h3>`;
+          bodyHtml += `<p class="text-xs mb-3" style="color:var(--text-dim)">移上 GIF 播放，移開停止；點圖片開啟原檔。複製會取得原尺寸 PNG。</p>`;
           bodyHtml += `<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">`;
-          allGifs.forEach((g, i) => {
+          allGifs.forEach(g => {
             bodyHtml += `
-              <button type="button" class="card p-2 text-center gif-card cursor-pointer" data-src="${g.url}" onclick="toggleGifPlayback(this)" aria-label="播放或停止 ${g.name}" aria-pressed="false">
-                <div class="relative w-full h-24 rounded mb-1 overflow-hidden" style="background:var(--bg-overlay)">
-                  <img src="${g.thumbnail || ''}" loading="lazy" decoding="async" class="gif-static w-full h-full object-contain">
-                </div>
-                <div class="text-[11px] text-[#636366] truncate">${g.variant ? g.variant + '/' : ''}${g.name}</div>
+              <div class="card p-2 text-center gif-card" data-src="${g.url}">
+                <a href="${g.url}" target="_blank" rel="noopener" aria-label="開啟 ${g.name}" onmouseenter="startGifPlayback(this.closest('.gif-card'))" onmouseleave="stopGifPlayback(this.closest('.gif-card'))" onfocus="startGifPlayback(this.closest('.gif-card'))" onblur="stopGifPlayback(this.closest('.gif-card'))" class="relative block w-full h-36 rounded mb-1 overflow-hidden" style="background:var(--bg-overlay)">
+                  <img src="${g.thumbnail || ''}" loading="lazy" decoding="async" class="gif-static w-full h-full object-contain" alt="${g.name}">
+                </a>
+                <div class="text-xs truncate">${g.variant ? g.variant + '/' : ''}${g.name}</div>
                 <div class="text-[10px] text-[#4a4a50]">${(g.size/1024).toFixed(0)} KB</div>
-                <div class="gif-play-label text-[11px] mt-1">▶ 點擊播放</div>
-              </button>`;
+                <div class="gif-play-label text-[11px] mt-1">移上播放 · 點擊開啟</div>
+                <button class="btn btn-secondary text-xs mt-2" data-image="${g.image}" onclick="copyLibraryImage(this)">複製靜態圖</button>
+              </div>`;
           });
+          if (h.main_image) {
+            bodyHtml += `
+              <div class="card p-2 text-center main-image-card">
+                <a href="${h.main_image}" target="_blank" rel="noopener" aria-label="開啟透明主圖" class="block w-full h-36 rounded mb-1 overflow-hidden" style="background:var(--bg-overlay)">
+                  <img src="${h.static_thumbnail}" loading="lazy" decoding="async" class="w-full h-full object-contain" alt="透明主圖">
+                </a>
+                <div class="text-xs">主要圖片 · 透明 PNG</div>
+                <div class="text-[11px] mt-1">保留原尺寸與完整畫面</div>
+                <button class="btn btn-primary text-xs mt-2" data-image="${h.main_image}" onclick="copyLibraryImage(this)">複製主圖</button>
+                <a class="block text-xs mt-2" href="${h.main_image}" download="${heroId}.png">下載 PNG</a>
+              </div>`;
+          }
           bodyHtml += `</div>`;
         } else {
           bodyHtml += `<div class="text-sm text-[#636366] mb-6">尚無 GIF</div>`;
@@ -2027,22 +2038,50 @@ function switchTab(name) {
         animation.removeAttribute('src');
         animation.remove();
       }
-      card.setAttribute('aria-pressed', 'false');
-      card.querySelector('.gif-play-label').textContent = '▶ 點擊播放';
+      card.querySelector('.gif-play-label').textContent = '移上播放 · 點擊開啟';
     }
 
-    function toggleGifPlayback(card) {
-      const wasPlaying = card.getAttribute('aria-pressed') === 'true';
+    function startGifPlayback(card) {
+      if (card.querySelector('.gif-anim')) return;
       document.querySelectorAll('#detail-body .gif-card').forEach(stopGifPlayback);
-      if (wasPlaying) return;
       const animation = document.createElement('img');
       animation.className = 'gif-anim w-full h-full object-contain absolute inset-0';
+      animation.style.pointerEvents = 'none';
       animation.onerror = () => stopGifPlayback(card);
       animation.src = card.dataset.src;
       card.querySelector('.relative').appendChild(animation);
-      card.setAttribute('aria-pressed', 'true');
-      card.querySelector('.gif-play-label').textContent = '■ 點擊停止';
+      card.querySelector('.gif-play-label').textContent = '播放中 · 點擊開啟';
     }
+
+    async function copyLibraryImage(button) {
+      const label = button.textContent;
+      button.disabled = true;
+      try {
+        if (!window.isSecureContext || !navigator.clipboard?.write || !window.ClipboardItem) {
+          throw new Error('瀏覽器不支援圖片複製，請開啟圖片或下載 PNG');
+        }
+        // Start the clipboard write in the click gesture; decoding/fetch may finish later.
+        const blob = fetch(button.dataset.image).then(async response => {
+          if (!response.ok) throw new Error('無法讀取圖片');
+          const image = await response.blob();
+          if (image.type !== 'image/png') throw new Error('圖片格式不是 PNG');
+          return image;
+        });
+        blob.catch(() => {}); // Avoid an orphaned fetch rejection if clipboard permission fails first.
+        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+        button.textContent = '已複製，可直接貼上';
+      } catch (e) {
+        button.textContent = '複製失敗';
+        alert(e.message || '無法寫入剪貼簿，請開啟圖片或下載 PNG');
+      } finally {
+        button.disabled = false;
+        setTimeout(() => { if (button.isConnected) button.textContent = label; }, 2500);
+      }
+    }
+
+    window.addEventListener('blur', () => {
+      document.querySelectorAll('#detail-body .gif-card').forEach(stopGifPlayback);
+    });
 
     const deletingLibraryHeroes = new Set();
     async function deleteLibraryHero(heroId) {
@@ -2075,16 +2114,7 @@ function switchTab(name) {
       if (!currentDetailHero) return;
       try {
         const h = await api(`/api/library/${currentDetailHero}`);
-        let path = '';
-        if (h.section === 'library') {
-          path = `output/heroes/${currentDetailHero}`;
-        } else {
-          const baseUrl = h.thumbnail || '';
-          const match = baseUrl.match(/\/output\/runs\/([^/]+)\/heroes\//);
-          if (match) {
-            path = `output/runs/${match[1]}/heroes/${currentDetailHero}`;
-          }
-        }
+        let path = h.folder_path || '';
         if (subfolder) path += `/${subfolder}`;
         if (path) await api('/api/open-folder', 'POST', {path});
       } catch (e) { alert(e.message); }
@@ -2093,7 +2123,7 @@ function switchTab(name) {
     async function promoteHero(heroId) {
       try {
         const r = await api(`/api/library/${heroId}/promote`, 'POST');
-        alert(`已移至 output/heroes/${heroId}/\n${r.promoted.join(', ')}`);
+        alert(`已保存至 ${r.dest}\n${r.promoted.join(', ')}`);
         loadLibrary();
       } catch (e) { alert(e.message); }
     }
@@ -2111,6 +2141,16 @@ function switchTab(name) {
       try {
         const r = await api('/api/clean-temp', 'POST');
         alert(`已清理 ${r.cleaned_runs.length} 個執行記錄的暫存`);
+      } catch (e) { alert(e.message); }
+    }
+
+    async function cleanGenerated() {
+      if (!confirm('永久清理所有執行資料與暫存？\n會刪除 output/runs 與 output/temp，釋放磁碟空間。library/heroes 的已保存圖鑑會保留。請先將要保留的結果「移至圖鑑」。')) return;
+      try {
+        closeHeroDetail();
+        const r = await api('/api/clean-generated', 'POST');
+        await loadLibrary();
+        alert(r.removed.length ? `已清理：${r.removed.join(', ')}\n已保存圖鑑保留。` : '沒有需要清理的資料');
       } catch (e) { alert(e.message); }
     }
 

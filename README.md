@@ -12,7 +12,13 @@ DawnAssetHelper 是一個用於協助解包 Unity AssetBundle 遊戲資源的 Wi
 4. 在解包結果中自動匹配並整理 Spine 所需的 `.skel` / `.json`, `.atlas`, `.png` 檔案。
 5. 產生完整的解包過程 `run.log` 與 `summary.json` 以便除錯與後續處理。
 
-英雄圖鑑的列表與 GIF 詳情預設使用靜態縮圖；點選單張 GIF 才播放，再點一次停止，關閉詳情即卸載動畫。每張英雄卡片與詳情頁都有「刪除」按鈕，會將該英雄的圖鑑與歷史執行副本移至輸出目錄的 `trash/` 回收區，保留原始 AssetBundle。工作執行中無法刪除。
+英雄圖鑑保存在獨立的 `library/heroes/`（設定欄位 `library_root`，預設 `./library`）。舊 `output/heroes/` 會在閒置時自動搬移，同名衝突保留兩份；舊图鑑若借用執行記錄的 GIF，會先保存 GIF 再允許清理。
+
+列表維持靜態縮圖；詳情的 GIF 移上播放、移開停止，點圖片開啟完整檔案。第三張「主要圖片 · 透明 PNG」取自原始 GIF 的代表影格，保留完整畫布、尺寸與透明背景，可複製或下載。GIF 的「複製靜態圖」也會複製原尺寸 PNG；剪貼簿不包含動畫。圖片複製需支援 ClipboardItem 的瀏覽器及安全來源（localhost 可用），失敗時可改用下載 PNG。
+
+「清理暫存」只刪除執行記錄中的 `raw_export`、`diagnostics`。「清理執行資料」經確認後永久刪除 `output/runs/` 與 `output/temp/`，釋放空間，保留已保存圖鑑、舊同名衝突資料、資源索引與回收區。未保存的執行結果須先按「移至圖鑑」。工作執行中不允許清理、保存或刪除。
+
+每張英雄卡片與詳情頁都有「刪除」按鈕，會將該英雄的圖鑑與歷史執行副本移至輸出目錄的 `trash/` 回收區，保留原始 AssetBundle。回收批次的 `manifest.json` 記錄根目錄與原路徑；`library/` 開頭的項目須復原到 `library_root`，其餘復原到 `output_root`。再次保存同一英雄時，舊保存版本留在 `library/versions/`。
 
 **重要限制聲明：**
 - 本工具不提供破解功能。

@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
             "gif_auto_trim_bad_leading_frames": self.config.gif_auto_trim_bad_leading_frames,
             "gif_trim_max_scan_frames": self.config.gif_trim_max_scan_frames,
             "output_root": self.config.output_root,
+            "library_root": self.config.library_root,
             "timeout_minutes": self.config.timeout_minutes,
             "assetstudio_export_types": self.config.assetstudio_export_types,
             "assetstudio_cli_profile": self.config.assetstudio_cli_profile,
@@ -736,7 +737,9 @@ class MainWindow(QMainWindow):
         runs_dir = output_root / "runs"
         if not runs_dir.exists():
             # If no runs yet, try to open the base heroes folder if it exists
-            hero_dir = output_root / "heroes" / selected_heroes[0].hero_id
+            hero_dir = Path(self.config.library_root) / "heroes" / selected_heroes[0].hero_id
+            if not hero_dir.exists():
+                hero_dir = output_root / "heroes" / selected_heroes[0].hero_id
             if hero_dir.exists():
                 os.startfile(str(hero_dir))
             return
@@ -752,7 +755,9 @@ class MainWindow(QMainWindow):
                     return
             
             # Fallback to direct heroes folder
-            hero_dir = output_root / "heroes" / hero_id
+            hero_dir = Path(self.config.library_root) / "heroes" / hero_id
+            if not hero_dir.exists():
+                hero_dir = output_root / "heroes" / hero_id
             if hero_dir.exists():
                 os.startfile(str(hero_dir))
                 return
@@ -765,6 +770,9 @@ class MainWindow(QMainWindow):
         if self.config.assetstudio_use_absolute_output_path:
             output_root = output_root.resolve()
 
+        saved = Path(self.config.library_root) / "heroes" / hero_id / folder / filename
+        if saved.exists():
+            return saved
         direct = output_root / "heroes" / hero_id / folder / filename
         if direct.exists():
             return direct
