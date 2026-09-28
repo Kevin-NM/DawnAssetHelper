@@ -41,22 +41,38 @@ class SpineExporterService:
         js_entry = npm_modules / "dist" / "cli" / "index.js"
         if js_entry.exists():
             return js_entry
+        # NVM executable shims live outside the actual global package directory.
+        npm = next((p for p in (ps1_path.parent / "npm.exe", ps1_path.parent / "npm.cmd") if p.is_file()), None)
+        npm_command = str(npm) if npm else shutil.which("npm")
+        if npm_command:
+            code, stdout, _ = ProcessRunner([npm_command, "root", "-g"]).run(timeout=15)
+            if code == 0:
+                js_entry = Path(stdout.strip()) / "spine-exporter" / "dist" / "cli" / "index.js"
+                if js_entry.is_file():
+                    return js_entry
         return None
 
     def _build_cmd(self, args: list[str]) -> list[str]:
         cli = self.cli_path
-        if cli.suffix.lower() == '.ps1':
-            js_entry = self._find_js_entry(cli)
-            if js_entry:
-                return ["node", str(js_entry)] + args
-        return [str(cli)] + args
+        js_entry = cli if cli.suffix.lower() == '.js' else self._find_js_entry(cli)
+        node = cli.parent / "node.exe"
+        node_command = str(node) if node.is_file() else shutil.which("node")
+        if not js_entry or not node_command:
+            raise RuntimeError("Cannot locate spine-exporter JavaScript entry and Node.js. "
+                               "Complete-image export requires the npm spine-exporter package.")
+        loader = Path(__file__).resolve().parents[2] / "patches" / "spine-exporter-loader.mjs"
+        return [node_command, "--experimental-loader", loader.as_uri(), str(js_entry)] + args
 
     def validate(self) -> bool:
         if not self.cli_path.exists() or not self.cli_path.is_file():
             logger.error(f"[SpineExporter] CLI path does not exist: {self.cli_path}")
             return False
 
-        cmd = self._build_cmd(["--help"])
+        try:
+            cmd = self._build_cmd(["--help"])
+        except RuntimeError as exc:
+            logger.error(f"[SpineExporter] {exc}")
+            return False
         runner = ProcessRunner(cmd)
         exit_code, stdout, stderr = runner.run(timeout=15)
 
@@ -126,15 +142,18 @@ class SpineExporterService:
             gif_output_dir.mkdir(parents=True, exist_ok=True)
 
         output_template = str(gif_output_dir.resolve()).replace("\\", "/") + "/{animationName}"
-        args = ["--export-type", "gif", "--fps", str(fps), "--scale", str(scale), "-o", output_template]
+        # Put the input first so yargs' selected-animation array cannot consume it.
+        args = [str(input_dir.resolve()), "--export-type", "gif", "--fps", str(fps), "--scale", str(scale), "-o", output_template]
         if pma:
             args.append("--pma")
         if selected_animations:
             args.append("--selected-animation")
             args.extend(selected_animations)
-        args.append(str(input_dir.resolve()))
 
-        cmd = self._build_cmd(args)
+        try:
+            cmd = self._build_cmd(args)
+        except RuntimeError as exc:
+            return "failed_spine_exporter", 0, [str(exc)], [], [], "", "", -1
         logger.info(f"[SpineExporter] Exporting GIF from {input_dir.name}")
 
         self.process_runner = ProcessRunner(cmd)
@@ -153,6 +172,10 @@ class SpineExporterService:
             logger.info(f"[SpineExporter] gif files: {', '.join(gif_files)}")
 
         status = "success"
+        if "Unsupported spine-exporter" in stderr:
+            errors.append("Installed spine-exporter source is unsupported; complete-image export was stopped. "
+                          "Any existing GIFs in the output folder are from an earlier export.")
+            return "failed_spine_exporter", 0, errors, warnings, [], stdout, stderr, exit_code
         if exit_code != 0:
             status = "success_with_warnings" if gif_count > 0 else "failed_spine_exporter"
             if gif_count == 0:

@@ -1,32 +1,44 @@
-# spine-exporter Patches
+# Complete-image Spine export
 
-## Problem
-spine-exporter's `calculateAnimationViewport()` takes the union of ALL animation frame bounds,
-producing an oversized canvas (e.g., 2728x5490 for a ~500x1000 character). This causes:
-- Wasted memory during rendering
-- Oversized GIF output when no `--canvas-size` is specified
+DawnAssetHelper automatically loads `spine-exporter-loader.mjs` when running the
+npm spine-exporter CLI. Fixes are applied in memory; the global npm package is
+unchanged. Restart DawnAssetHelper after updating the application.
 
-## Patches Applied
+The loader:
 
-### 1. renderer.js — Height bug fix (line 120)
-**File**: `node_modules/spine-exporter/dist/renderer.js`
-**Original**: `this.canvas.height = viewsize?.height || Math.round(viewport.width);`
-**Fixed**: `this.canvas.height = viewsize?.height || Math.round(viewport.height);`
-**Reason**: Typo — `viewport.width` should be `viewport.height`
+- Fixes the upstream canvas-height typo (`viewport.width` used as height).
+- Measures every rendered pose, including the final pose and low-FPS time steps,
+  using the same AnimationState playback as the renderer.
+- Replaces the old percentile patch, which discarded the largest 10% of poses
+  and could clip raised arms, accessories, and moving clothing.
+- Adds two output pixels on each side and rounds dimensions upward to retain edges.
+- Disables `sharp.trim()` automatic cropping to preserve the full rendered canvas.
 
-### 2. handler.js — Always enable autoCrop (line 51)
-**File**: `node_modules/spine-exporter/dist/handler.js`
-**Original**: `autoCrop: viewSize !== undefined,`
-**Fixed**: `autoCrop: true,`
-**Reason**: The auto-crop infrastructure (sharp.trim()) already exists in exporter.js but was only
-activated when `--canvas-size` was explicitly passed. Enabling it unconditionally makes GIF output
-match Spine Pro's behavior: tight crop around actual visible content.
+Large or unusual poses may produce a larger canvas. This is intentional: the
+export preserves the content instead of guessing which geometry to discard.
+Existing cropped GIFs must be exported again from their skeleton/atlas assets;
+their missing pixels cannot be recovered from the GIF itself.
 
-## How to Apply
-Run from the project root:
+The supported source layout is spine-exporter 0.8.0, including the project's old
+patches. Unrecognized source layouts fail with a diagnostic instead of exporting
+with potentially unsafe bounds. Node.js and the npm package must be available;
+NVM shims are resolved using `npm root -g`.
+
+For optional manual patching outside DawnAssetHelper:
+
 ```powershell
 .\patches\apply-spine-exporter-patches.ps1
+# Or select an explicit installed package:
+.\patches\apply-spine-exporter-patches.ps1 -PackageRoot C:\path\to\spine-exporter
 ```
 
-## When to Re-apply
-After any `npm install -g spine-exporter` or `npm update -g spine-exporter`.
+Manual patching keeps the first original files as `.dawn-backup`. Reapply after
+npm updates only if you also use the CLI directly. The application does not need
+manual reapplication.
+
+Regression checks:
+
+```powershell
+node tests/spine-exporter-loader.test.mjs
+python -m unittest discover -s tests -p "test_*.py"
+```

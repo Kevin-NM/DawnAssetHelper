@@ -116,6 +116,7 @@ DawnAssetHelper 支援呼叫 `Spine.com` 將 `.atlas` 與 `.png` 拆解回散圖
 
 ### 7. 全自動 Spine GIF 匯出 (推薦)
 DawnAssetHelper 支援解包完成後全自動一條龍產出 GIF！
+使用 spine-exporter 引擎時，程式會保留整段動畫的完整範圍與透明留白，修正畫布高度錯誤，並停用強制自動裁切。舊版已裁掉內容的 GIF 請重新匯出；更新後重啟程式即可生效，無需手動套用 npm 補丁。詳見 [匯出修正說明](patches/README.md)。
 但為了確保相容性，Spine CLI 的 GIF 匯出設定必須由您的 Spine 版本（例如 3.8.75）產生。**請勿依賴自動生成的猜測檔**。
 
 **一次性前置設定 (必做)：**
